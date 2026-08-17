@@ -23,6 +23,7 @@ import {
   PointOfSaleOutlined,
   ReceiptLongOutlined,
   LogoutOutlined,
+  WorkspacePremiumOutlined,
 } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getUserDetail } from "../../../api/controller/admin_controller/user_controller";
@@ -43,6 +44,7 @@ const navGroups = [
       { label: "POS", icon: <PointOfSaleOutlined />, path: "/seller/pos" },
       { label: "Shops", icon: <StorefrontOutlined />, path: "/seller/shops" },
       { label: "Orders", icon: <ShoppingCartOutlined />, path: "/seller/orders" },
+      { label: "Packages", icon: <WorkspacePremiumOutlined />, path: "/seller/packages" },
     ],
   },
   {

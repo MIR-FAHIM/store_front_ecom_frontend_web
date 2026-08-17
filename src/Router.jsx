@@ -41,6 +41,7 @@ import MonthWiseReport from "./scenes/admin_panel/report/MonthWiseReport";
 import LoginSuccessLogs from "./scenes/admin_panel/report/LoginSuccessLogs";
 import AddCategory from "./scenes/admin_panel/category/AddCategory";
 import BrandManagement from "./scenes/admin_panel/brand/BrandManagement";
+import SubscriptionPackageManagement from "./scenes/admin_panel/subscription/SubscriptionPackageManagement";
 import AddDeliveryMan from "./scenes/admin_panel/delivery/AddDeliveryMan";
 import DeliveryManDetail from "./scenes/admin_panel/delivery/DeliveryManDetail";
 import RelatedProductAdd from "./scenes/admin_panel/product/add_product/components/RelatedProductAdd";
@@ -74,6 +75,7 @@ import Terms from "./scenes/a_frontend_ui/pages/Terms";
 import About from "./scenes/a_frontend_ui/pages/About";
 import Contact from "./scenes/a_frontend_ui/pages/Contact";
 import DateInvitation from "./scenes/a_frontend_ui/pages/DateInvitation";
+import StoreOwnerLanding from "./scenes/a_frontend_ui/pages/StoreOwnerLanding";
 import ProceedOrder from "./scenes/a_frontend_ui/order/ProceedOrder";
 import OrderSuccessPage from "./scenes/a_frontend_ui/order/order_success_page";
 import PaymentSuccessPage from "./scenes/a_frontend_ui/order/PaymentSuccessPage";
@@ -111,6 +113,7 @@ import SellerBankAccount from "./scenes/seller_panel/accounting/bank_account";
 import PosManagementSeller from "./scenes/seller_panel/pos_management/PosManagement";
 import SellerOrderDetails from "./scenes/seller_panel/order/SellerOrderDetails";
 import SettledAmountHistory from "./scenes/seller_panel/accounting/settled_amount_history";
+import MerchantPackages from "./scenes/seller_panel/subscription/MerchantPackages";
 
 
 
@@ -121,6 +124,8 @@ const AppRouter = () => {
       <Routes>
         <Route path="/admin-login" element={<AdminLogin />}></Route>
         <Route path="/date-invitation" element={<DateInvitation />}></Route>
+        <Route path="/store-owner" element={<StoreOwnerLanding />}></Route>
+        <Route path="/start-selling" element={<StoreOwnerLanding />}></Route>
         {hasCustomerSite && (
           <>
             <Route path="/login" element={<Login />}></Route>
@@ -201,6 +206,7 @@ const AppRouter = () => {
           <Route path="related-product-add" element={<RelatedProductAdd />} />
           <Route path="/ecom/category/add" element={<AddCategory />} />
           <Route path="/ecom/brand/manage" element={<BrandManagement />} />
+          <Route path="/admin/subscription-packages" element={<SubscriptionPackageManagement />} />
           {/* Order Routes */}
           <Route path="/ecom/order/all" element={<AllOrdersEcom />} />
           <Route path="/ecom/order/completed" element={<CompletedOrders />} />
@@ -254,9 +260,15 @@ const AppRouter = () => {
             <Route path="edit/product/:id" element={<EditProductSeller />} />
             <Route path="orders" element={<OrderShop />} />
             <Route path="pos" element={<PosManagementSeller />} />
+            <Route path="packages" element={<MerchantPackages />} />
             <Route path="orders/:id" element={<SellerOrderDetails />} />
             <Route path="accounting/settled-amount-history" element={<SettledAmountHistory />} />
 
+          </Route>
+        )}
+        {hasSellerPanel && (
+          <Route path="/merchant" element={<RequireSeller><SellerLayout /></RequireSeller>}>
+            <Route path="packages" element={<MerchantPackages />} />
           </Route>
         )}
         {!hasCustomerSite && <Route path="*" element={<Navigate to="/admin" replace />} />}

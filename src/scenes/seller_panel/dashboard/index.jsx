@@ -34,6 +34,7 @@ import { useNavigate } from "react-router-dom";
 import { getShopReport, getShopMonthReport } from "../../../api/controller/admin_controller/report/report_controller";
 import { getShopOrder } from "../../../api/controller/admin_controller/order/order_controller";
 import { getAllShops } from "../../../api/controller/admin_controller/shop/shop_controller.jsx";
+import SubscriptionWidget from "../subscription/SubscriptionWidget";
 
 const safeArray = (x) => (Array.isArray(x) ? x : []);
 
@@ -194,6 +195,8 @@ const SellerDashboard = () => {
       </Card>
 
       {/* ─── Stat Cards ─── */}
+      <SubscriptionWidget />
+
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {stats.map((s) => (
           <Grid item xs={6} md={3} key={s.label}>

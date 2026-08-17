@@ -47,6 +47,7 @@ import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import jsPDF from "jspdf";
+import { appname } from "../../../api/config";
 import { getOrderDetails, updateOrderStatus, assignDeliveryBoy, unassignDeliveryBoy, getOrderStatusList } from "../../../api/controller/admin_controller/order/order_controller";
 import { getDeliveryMen } from "../../../api/controller/admin_controller/user_controller";
 
@@ -270,8 +271,9 @@ const OderDetails = () => {
     if (!order) return;
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     const addressInfo = getOrderAddressInfo(order);
+    let pdfFont = "helvetica";
+    const receiptBrandName = appname || "PharmaVan";
 
-    // Load Bangla-supporting font
     try {
       const res = await fetch("/fonts/NotoSansBengali.ttf");
       if (res.ok) {
@@ -281,72 +283,218 @@ const OderDetails = () => {
         for (let i = 0; i < bytes.length; i += 0x8000) {
           binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
         }
-        const base64 = btoa(binary);
-        doc.addFileToVFS("NotoSansBengali.ttf", base64);
+        doc.addFileToVFS("NotoSansBengali.ttf", btoa(binary));
         doc.addFont("NotoSansBengali.ttf", "NotoSansBengali", "normal");
+        doc.addFont("NotoSansBengali.ttf", "NotoSansBengali", "bold");
         doc.setFont("NotoSansBengali", "normal");
+        pdfFont = "NotoSansBengali";
       }
     } catch (e) {
       console.warn("Bangla font load failed, using default font.", e);
     }
 
     const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 40;
-    let y = 50;
-
-    doc.setFontSize(18);
-    doc.text("Order Receipt", margin, y);
-    y += 18;
-    doc.setFontSize(10);
-    doc.text(`Order: ${order.order_number || order.id}`, margin, y);
-    doc.text(`Date: ${formatDate(order.created_at)}`, pageWidth - margin - 160, y);
-    y += 18;
-    doc.setFontSize(11);
-    doc.text(`Customer: ${addressInfo.name}`, margin, y);
-    y += 14;
-    doc.text(`Phone: ${addressInfo.phone}`, margin, y);
-    y += 14;
-    doc.text(`Address: ${addressInfo.addressLine}`, margin, y);
-    y += 20;
-
-    const columns = [
-      { label: "Item", width: 260 },
-      { label: "Qty", width: 40 },
-      { label: "Unit", width: 90 },
-      { label: "Total", width: 90 },
-    ];
-    const tableX = margin;
-    const rowHeight = 18;
-    doc.setFontSize(11);
-    let x = tableX;
-    columns.forEach((col) => { doc.text(col.label, x, y); x += col.width; });
-    y += 8;
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 14;
-
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 36;
+    const contentWidth = pageWidth - margin * 2;
     const items = Array.isArray(order.items) ? order.items : [];
-    items.forEach((item) => {
-      const name = item.product_name || "Item";
-      const nameLines = doc.splitTextToSize(name, columns[0].width - 6);
-      const lineCount = Math.max(1, nameLines.length);
-      const lineY = y + 2;
-      doc.text(nameLines, tableX, lineY);
-      doc.text(String(item.qty || 0), tableX + columns[0].width, lineY);
-      doc.text(formatCurrency(item.unit_price), tableX + columns[0].width + columns[1].width, lineY);
-      doc.text(formatCurrency(item.line_total), tableX + columns[0].width + columns[1].width + columns[2].width, lineY);
-      y += rowHeight * lineCount;
-      if (y > doc.internal.pageSize.getHeight() - 140) { doc.addPage(); y = 50; }
+    const colors = {
+      ink: "#111827",
+      muted: "#64748b",
+      line: "#e5e7eb",
+      soft: "#f8fafc",
+      softer: "#f1f5f9",
+      primary: "#4f46e5",
+      primaryDark: "#312e81",
+      success: "#059669",
+      danger: "#dc2626",
+      amber: "#d97706",
+    };
+    let y = 34;
+
+    const drawText = (text, x, yPos, opts = {}) => {
+      doc.setFontSize(opts.size || 10);
+      doc.setFont(pdfFont, opts.weight || "normal");
+      doc.setTextColor(opts.color || colors.ink);
+      doc.text(text, x, yPos, opts.options || {});
+    };
+    const drawFooter = () => {
+      const footerY = pageHeight - 24;
+      doc.setDrawColor(colors.line);
+      doc.line(margin, footerY - 14, pageWidth - margin, footerY - 14);
+      drawText(`Generated from ${receiptBrandName} Admin Panel`, margin, footerY, { size: 8, color: colors.muted });
+      drawText(`Page ${doc.internal.getNumberOfPages()}`, pageWidth - margin, footerY, {
+        size: 8,
+        color: colors.muted,
+        options: { align: "right" },
+      });
+    };
+    const ensureSpace = (heightNeeded, resetY = 58) => {
+      if (y + heightNeeded <= pageHeight - 60) return false;
+      drawFooter();
+      doc.addPage();
+      y = resetY;
+      return true;
+    };
+    const drawBadge = (text, x, yPos, color, bg) => {
+      const width = Math.max(62, doc.getTextWidth(text) + 20);
+      doc.setFillColor(bg);
+      doc.setDrawColor(color);
+      doc.roundedRect(x, yPos - 14, width, 23, 8, 8, "FD");
+      drawText(text, x + 10, yPos + 1, { size: 8.5, weight: "bold", color });
+      return width;
+    };
+    const drawLabelValue = (label, value, x, yPos, maxWidth) => {
+      drawText(label, x, yPos, { size: 8, weight: "bold", color: colors.muted });
+      const lines = doc.splitTextToSize(cleanText(value), maxWidth);
+      drawText(lines, x, yPos + 16, { size: 9.5, color: colors.ink });
+      return yPos + 16 + lines.length * 13;
+    };
+    const drawInfoCard = (title, rows, x, yPos, width) => {
+      doc.setFillColor("#ffffff");
+      doc.setDrawColor(colors.line);
+      doc.roundedRect(x, yPos, width, 124, 10, 10, "FD");
+      drawText(title, x + 14, yPos + 23, { size: 11, weight: "bold", color: colors.primaryDark });
+      let rowY = yPos + 45;
+      rows.forEach(([label, value]) => {
+        rowY = drawLabelValue(label, value, x + 14, rowY, width - 28) + 5;
+      });
+    };
+
+    doc.setFillColor(colors.primaryDark);
+    doc.roundedRect(margin, y, contentWidth, 98, 14, 14, "F");
+    doc.setFillColor(colors.primary);
+    doc.circle(pageWidth - margin - 42, y + 34, 54, "F");
+    doc.setFillColor("#818cf8");
+    doc.circle(pageWidth - margin - 12, y + 84, 44, "F");
+
+    drawText(receiptBrandName, margin + 22, y + 32, { size: 20, weight: "bold", color: "#ffffff" });
+    drawText("Order Receipt", margin + 22, y + 56, { size: 12, color: "#c7d2fe" });
+    drawText(`# ${order.order_number || order.id}`, margin + 22, y + 78, { size: 11, weight: "bold", color: "#ffffff" });
+    drawText(formatCurrency(order.total), pageWidth - margin - 22, y + 43, {
+      size: 18,
+      weight: "bold",
+      color: "#ffffff",
+      options: { align: "right" },
+    });
+    drawText("TOTAL PAYABLE", pageWidth - margin - 22, y + 63, {
+      size: 8,
+      weight: "bold",
+      color: "#c7d2fe",
+      options: { align: "right" },
     });
 
-    y += 10;
-    doc.line(margin, y, pageWidth - margin, y);
+    y += 116;
+    const statusText = cleanText(order.status, "Pending");
+    const paymentText = cleanText(order.payment_status, "Unpaid");
+    const paymentColor = String(order.payment_status).toLowerCase() === "paid" ? colors.success : colors.danger;
+    const statusWidth = drawBadge(statusText, margin, y, colors.primary, "#eef2ff");
+    drawBadge(paymentText, margin + statusWidth + 10, y, paymentColor, String(order.payment_status).toLowerCase() === "paid" ? "#ecfdf5" : "#fef2f2");
+    drawText(`Date: ${formatDate(order.created_at)}`, pageWidth - margin, y, {
+      size: 9.5,
+      color: colors.muted,
+      options: { align: "right" },
+    });
+
+    y += 26;
+    const cardGap = 14;
+    const cardWidth = (contentWidth - cardGap) / 2;
+    drawInfoCard("Customer", [
+      ["Name", addressInfo.name],
+      ["Phone", addressInfo.phone],
+      ["User ID", order.user_id || "N/A"],
+    ], margin, y, cardWidth);
+    drawInfoCard("Shipping Address", [
+      ["Address", addressInfo.addressLine],
+      ["Area / District", [addressInfo.area, addressInfo.district].filter((value) => value && value !== "—").join(", ") || "N/A"],
+      ["Address ID", addressInfo.id || "N/A"],
+    ], margin + cardWidth + cardGap, y, cardWidth);
+
+    y += 148;
+    drawText("Order Items", margin, y, { size: 13, weight: "bold", color: colors.ink });
+    drawText(`${items.length} item${items.length === 1 ? "" : "s"}`, pageWidth - margin, y, {
+      size: 9,
+      color: colors.muted,
+      options: { align: "right" },
+    });
     y += 16;
-    doc.setFontSize(11);
-    doc.text(`Subtotal: ${formatCurrency(order.subtotal)}`, pageWidth - margin - 200, y); y += 14;
-    doc.text(`Shipping: ${formatCurrency(order.shipping_fee)}`, pageWidth - margin - 200, y); y += 14;
-    doc.text(`Discount: -${formatCurrency(order.discount)}`, pageWidth - margin - 200, y); y += 18;
-    doc.setFontSize(12);
-    doc.text(`Total: ${formatCurrency(order.total)}`, pageWidth - margin - 200, y);
+
+    const table = {
+      x: margin,
+      width: contentWidth,
+      itemX: margin + 14,
+      shopX: margin + 270,
+      qtyX: margin + 394,
+      unitX: pageWidth - margin - 98,
+      totalX: pageWidth - margin - 14,
+    };
+    const drawTableHeader = () => {
+      doc.setFillColor(colors.softer);
+      doc.setDrawColor(colors.line);
+      doc.roundedRect(table.x, y, table.width, 30, 8, 8, "FD");
+      drawText("Item", table.itemX, y + 19, { size: 8, weight: "bold", color: colors.muted });
+      drawText("Shop", table.shopX, y + 19, { size: 8, weight: "bold", color: colors.muted });
+      drawText("Qty", table.qtyX, y + 19, { size: 8, weight: "bold", color: colors.muted, options: { align: "center" } });
+      drawText("Unit", table.unitX, y + 19, { size: 8, weight: "bold", color: colors.muted, options: { align: "right" } });
+      drawText("Total", table.totalX, y + 19, { size: 8, weight: "bold", color: colors.muted, options: { align: "right" } });
+      y += 34;
+    };
+    drawTableHeader();
+
+    items.forEach((item, index) => {
+      const itemLines = doc.splitTextToSize(cleanText(item.product_name || item.name || "Item"), 240);
+      const shopLines = doc.splitTextToSize(cleanText(item?.shop?.shop_name || item?.shop?.name || "-", "-"), 92);
+      const rowHeight = Math.max(36, Math.max(itemLines.length, shopLines.length) * 12 + 16);
+      if (ensureSpace(rowHeight + 14)) drawTableHeader();
+
+      doc.setFillColor(index % 2 === 0 ? "#ffffff" : colors.soft);
+      doc.setDrawColor("#eef2f7");
+      doc.roundedRect(table.x, y - 4, table.width, rowHeight, 8, 8, "FD");
+      drawText(itemLines, table.itemX, y + 13, { size: 9.5, weight: "bold", color: colors.ink });
+      drawText(shopLines, table.shopX, y + 13, { size: 8.5, color: colors.muted });
+      drawText(String(item.qty || 0), table.qtyX, y + 13, { size: 9.5, color: colors.ink, options: { align: "center" } });
+      drawText(formatCurrency(item.unit_price), table.unitX, y + 13, { size: 9, color: colors.ink, options: { align: "right" } });
+      drawText(formatCurrency(item.line_total), table.totalX, y + 13, { size: 9.5, weight: "bold", color: colors.ink, options: { align: "right" } });
+      y += rowHeight + 8;
+    });
+
+    ensureSpace(132);
+    const totalsWidth = 224;
+    const totalsX = pageWidth - margin - totalsWidth;
+    y += 4;
+    doc.setFillColor("#ffffff");
+    doc.setDrawColor(colors.line);
+    doc.roundedRect(totalsX, y, totalsWidth, 114, 12, 12, "FD");
+    [
+      ["Subtotal", formatCurrency(order.subtotal)],
+      ["Shipping", formatCurrency(order.shipping_fee)],
+      ["Discount", `-${formatCurrency(order.discount)}`],
+    ].forEach(([label, value], index) => {
+      const rowY = y + 24 + index * 18;
+      drawText(label, totalsX + 16, rowY, { size: 9, color: colors.muted });
+      drawText(value, totalsX + totalsWidth - 16, rowY, { size: 9, weight: "bold", color: colors.ink, options: { align: "right" } });
+    });
+    doc.setDrawColor(colors.line);
+    doc.line(totalsX + 16, y + 73, totalsX + totalsWidth - 16, y + 73);
+    drawText("Grand Total", totalsX + 16, y + 94, { size: 11, weight: "bold", color: colors.primaryDark });
+    drawText(formatCurrency(order.total), totalsX + totalsWidth - 16, y + 94, {
+      size: 12,
+      weight: "bold",
+      color: colors.primary,
+      options: { align: "right" },
+    });
+
+    if (order.note) {
+      y += 136;
+      ensureSpace(58);
+      doc.setFillColor("#fffbeb");
+      doc.setDrawColor("#fde68a");
+      doc.roundedRect(margin, y, contentWidth, 50, 10, 10, "FD");
+      drawText("Order Note", margin + 14, y + 19, { size: 9, weight: "bold", color: colors.amber });
+      drawText(doc.splitTextToSize(cleanText(order.note), contentWidth - 28), margin + 14, y + 36, { size: 9, color: colors.ink });
+    }
+
+    drawFooter();
     doc.save(`order-${order.order_number || order.id}.pdf`);
   };
 

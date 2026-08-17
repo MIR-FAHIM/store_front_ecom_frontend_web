@@ -128,6 +128,7 @@ export default function SmartProductCard({
   showWishlist = true,
   syncUserState = true,
   fromSeller = false,
+  alwaysShowCartBar = false,
 }) {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -545,8 +546,8 @@ export default function SmartProductCard({
               left: 0,
               right: 0,
               zIndex: 3,
-              opacity: 0,
-              transform: "translateY(100%)",
+              opacity: alwaysShowCartBar ? 1 : 0,
+              transform: alwaysShowCartBar ? "translateY(0)" : "translateY(100%)",
               transition: "opacity 220ms ease, transform 220ms ease",
             }}
           >

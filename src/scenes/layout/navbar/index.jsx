@@ -44,6 +44,7 @@ const PAGE_TITLES = {
   "/ecom/product/attribute":         "Attributes",
   "/ecom/category/add":              "Add Category",
   "/ecom/brand/manage":              "Brand Management",
+  "/admin/subscription-packages":     "Subscription Packages",
   "/ecom/order/all":                 "All Orders",
   "/ecom/order/completed":           "Completed Orders",
   "/ecom/seller/add":                "Add Seller",

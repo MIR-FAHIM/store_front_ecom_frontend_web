@@ -52,9 +52,10 @@ import { tokens } from "../../../theme";
 const emptyEditForm = {
   name: "",
   email: "",
-  mobile: "",
   phone: "",
   address: "",
+  password: "",
+  confirm_password: "",
 };
 
 const unwrapUser = (payload) => {
@@ -207,9 +208,10 @@ const AllCustomers = () => {
     setEditForm({
       name: fieldValue(customer?.name || customer?.user?.name),
       email: fieldValue(getCustomerEmail(customer)),
-      mobile: fieldValue(customer?.mobile || customer?.user?.mobile),
       phone: fieldValue(customer?.phone || customer?.user?.phone),
       address: fieldValue(customer?.address || customer?.user?.address),
+      password: "",
+      confirm_password: "",
     });
   };
 
@@ -252,13 +254,29 @@ const AllCustomers = () => {
     setFieldErrors({});
 
     try {
+      const nextPassword = String(editForm.password || "");
+      const confirmPassword = String(editForm.confirm_password || "");
+
+      if (nextPassword || confirmPassword) {
+        if (nextPassword.length < 6) {
+          setFieldErrors({ password: "Password must be at least 6 characters." });
+          setSaving(false);
+          return;
+        }
+        if (nextPassword !== confirmPassword) {
+          setFieldErrors({ confirm_password: "Password and confirm password do not match." });
+          setSaving(false);
+          return;
+        }
+      }
+
       const payload = {
         name: nullableValue(editForm.name),
         email: nullableValue(editForm.email),
-        mobile: nullableValue(editForm.mobile),
         phone: nullableValue(editForm.phone),
         address: nullableValue(editForm.address),
       };
+      if (nextPassword) payload.password = nextPassword;
 
       const response = await updateUser(editId, payload);
       if (isSuccess(response)) {
@@ -730,21 +748,35 @@ const AllCustomers = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Mobile"
-                    value={editForm.mobile}
-                    onChange={setEditField("mobile")}
-                    error={Boolean(fieldErrors.mobile)}
-                    helperText={fieldErrors.mobile}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
                     label="Phone"
                     value={editForm.phone}
                     onChange={setEditField("phone")}
                     error={Boolean(fieldErrors.phone)}
                     helperText={fieldErrors.phone}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="New Password"
+                    type="password"
+                    value={editForm.password}
+                    onChange={setEditField("password")}
+                    error={Boolean(fieldErrors.password)}
+                    helperText={fieldErrors.password || "Leave blank to keep current password"}
+                    autoComplete="new-password"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Confirm Password"
+                    type="password"
+                    value={editForm.confirm_password}
+                    onChange={setEditField("confirm_password")}
+                    error={Boolean(fieldErrors.confirm_password)}
+                    helperText={fieldErrors.confirm_password}
+                    autoComplete="new-password"
                   />
                 </Grid>
                 <Grid item xs={12}>

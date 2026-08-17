@@ -24,6 +24,14 @@ const readStoredPayment = () => {
   }
 };
 
+const readStoredSubscription = () => {
+  try {
+    return JSON.parse(sessionStorage.getItem("aamarpay_pending_subscription") || "{}");
+  } catch {
+    return {};
+  }
+};
+
 const firstValue = (...values) => values.find((value) => value !== undefined && value !== null && value !== "");
 
 const PaymentFailedPage = () => {
@@ -32,18 +40,27 @@ const PaymentFailedPage = () => {
 
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const storedPayment = useMemo(readStoredPayment, []);
+  const storedSubscription = useMemo(readStoredSubscription, []);
   const payment = location.state?.payment || {};
 
   const paymentGroupId = firstValue(params.get("payment_group_id"), payment.payment_group_id, storedPayment.paymentGroupId);
   const orderId = firstValue(params.get("order_id"), payment.order_id, storedPayment.orderId);
   const orderIds = firstValue(params.get("order_ids"), storedPayment.orderIds);
-  const amount = firstValue(params.get("amount"), payment.amount, storedPayment.amount);
+  const amount = firstValue(params.get("amount"), payment.amount, storedSubscription.amount, storedPayment.amount);
   const transactionId = firstValue(
     params.get("tran_id"),
     params.get("mer_txnid"),
+    params.get("merchant_transaction_id"),
     payment.merchant_transaction_id,
+    storedSubscription.merchantTransactionId,
     storedPayment.transactionId
   );
+  const paymentType = firstValue(params.get("payment_type"), payment.payment_type, storedSubscription.paymentType);
+  const storeId = firstValue(params.get("store_id"), payment.store_id, storedSubscription.storeId);
+  const paymentId = firstValue(params.get("payment_id"), payment.payment_id, storedSubscription.paymentId);
+  const isSubscriptionPayment =
+    String(paymentType || "").toLowerCase() === "store_subscription" ||
+    String(transactionId || "").toUpperCase().startsWith("SUB-");
   const gatewayTransactionId = firstValue(params.get("pg_txnid"), params.get("gateway_transaction_id"));
   const reason = firstValue(
     params.get("reason"),
@@ -55,17 +72,18 @@ const PaymentFailedPage = () => {
   const status = firstValue(params.get("status"), params.get("pay_status"), payment.status);
 
   useEffect(() => {
-    sessionStorage.removeItem("aamarpay_pending_payment");
-  }, []);
+    if (isSubscriptionPayment) sessionStorage.removeItem("aamarpay_pending_subscription");
+    else sessionStorage.removeItem("aamarpay_pending_payment");
+  }, [isSubscriptionPayment]);
 
   const detailRows = [
-    { label: "Payment group", value: paymentGroupId },
-    { label: "Order ID", value: orderIds || orderId },
+    isSubscriptionPayment ? { label: "Store ID", value: storeId } : { label: "Payment group", value: paymentGroupId },
+    isSubscriptionPayment ? { label: "Payment ID", value: paymentId } : { label: "Order ID", value: orderIds || orderId },
     { label: "Transaction ID", value: transactionId },
     { label: "Gateway transaction", value: gatewayTransactionId },
     { label: "Status", value: status },
     { label: "Reason", value: reason },
-  ].filter((row) => row.value);
+  ].filter((row) => row?.value);
 
   return (
     <Box
@@ -109,7 +127,7 @@ const PaymentFailedPage = () => {
             <Box>
               <Chip
                 icon={<ErrorOutlineIcon />}
-                label="Payment failed"
+                label={isSubscriptionPayment ? "Subscription payment failed" : "Payment failed"}
                 sx={{
                   mb: 1.2,
                   borderRadius: 1,
@@ -119,10 +137,12 @@ const PaymentFailedPage = () => {
                 }}
               />
               <Typography variant="h4" sx={{ fontWeight: 800, color: "#102033", lineHeight: 1.1 }}>
-                Payment was not completed
+                {isSubscriptionPayment ? "Subscription payment was not completed" : "Payment was not completed"}
               </Typography>
               <Typography variant="body1" sx={{ color: "#516070", mt: 1 }}>
-                Your online payment could not be verified. You can try again or review your order history.
+                {isSubscriptionPayment
+                  ? "Your store subscription payment could not be completed. You can try again from packages."
+                  : "Your online payment could not be verified. You can try again or review your order history."}
               </Typography>
             </Box>
 
@@ -160,7 +180,7 @@ const PaymentFailedPage = () => {
                 <Stack direction="row" spacing={1} alignItems="center">
                   <ReceiptLongIcon fontSize="small" sx={{ color: "#334155" }} />
                   <Typography variant="subtitle2" sx={{ color: "#102033", fontWeight: 800 }}>
-                    Payment attempt details
+                    {isSubscriptionPayment ? "Subscription payment details" : "Payment attempt details"}
                   </Typography>
                 </Stack>
                 <Divider />
@@ -186,7 +206,7 @@ const PaymentFailedPage = () => {
                 size="large"
                 fullWidth
                 startIcon={<ReplayIcon />}
-                onClick={() => navigate("/checkout")}
+                onClick={() => navigate(isSubscriptionPayment ? "/seller/packages" : "/checkout")}
                 sx={{
                   textTransform: "none",
                   fontWeight: 800,
@@ -197,28 +217,30 @@ const PaymentFailedPage = () => {
                   "&:hover": { bgcolor: "#b91c1c", boxShadow: "none" },
                 }}
               >
-                Try again
+                {isSubscriptionPayment ? "Try Again" : "Try again"}
               </Button>
               <Button
                 variant="outlined"
                 size="large"
                 fullWidth
                 startIcon={<ShoppingBagIcon />}
-                onClick={() => navigate("/orders")}
+                onClick={() => navigate(isSubscriptionPayment ? "/seller/packages" : "/orders")}
                 sx={{ textTransform: "none", fontWeight: 800, borderRadius: 2, py: 1.2 }}
               >
-                View orders
+                {isSubscriptionPayment ? "Back to Packages" : "View orders"}
               </Button>
             </Stack>
 
-            <Button
-              variant="text"
-              startIcon={<HomeIcon />}
-              onClick={() => navigate("/")}
-              sx={{ textTransform: "none", fontWeight: 800 }}
-            >
-              Continue shopping
-            </Button>
+            {!isSubscriptionPayment && (
+              <Button
+                variant="text"
+                startIcon={<HomeIcon />}
+                onClick={() => navigate("/")}
+                sx={{ textTransform: "none", fontWeight: 800 }}
+              >
+                Continue shopping
+              </Button>
+            )}
           </Stack>
         </Paper>
       </Container>

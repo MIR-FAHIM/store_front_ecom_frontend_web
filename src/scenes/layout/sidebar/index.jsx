@@ -36,6 +36,7 @@ import {
   LoginOutlined,
   CategoryOutlined,
   LocalOfferOutlined,
+  CardMembershipOutlined,
 } from "@mui/icons-material";
 import defaultLogo from "../../../assets/images/logo.png";
 import { ToggledContext } from "../../../App";
@@ -95,6 +96,11 @@ const NAV_GROUPS = [
           { title: "Add Seller",  path: "/ecom/seller/add", icon: <PersonAddAltOutlined fontSize="small" /> },
           { title: "All Sellers", path: "/ecom/seller/all", icon: <StorefrontOutlined   fontSize="small" /> },
         ],
+      },
+      {
+        title: "Subscription Packages",
+        path: "/admin/subscription-packages",
+        icon: <CardMembershipOutlined fontSize="small" />,
       },
       {
         title: "Customers", key: "customer", icon: <PeopleAltOutlined fontSize="small" />,
