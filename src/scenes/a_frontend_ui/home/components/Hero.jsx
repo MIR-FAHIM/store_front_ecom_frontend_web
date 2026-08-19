@@ -4,11 +4,12 @@ import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 import { getBanner } from "../../../../api/controller/admin_controller/media/banner_controller";
 import { useNavigate } from "react-router-dom";
 import { image_file_url } from "../../../../api/config";
-import { productDetailPath } from "../../../../utils/productRoute";
+import { categoryPath, productDetailPath } from "../../../../utils/productRoute";
 
-export default function Hero() {
+export default function Hero({ storeParams = {} }) {
   const theme = useTheme();
   const navigate = useNavigate();
+  const storeSlug = storeParams?.store_slug || "";
 
   // MUI breakpoints: xs <600, sm 600-899, md 900-1199, lg 1200-1535, xl 1536+
   const isXs = useMediaQuery(theme.breakpoints.down("sm")); // phones
@@ -25,7 +26,7 @@ export default function Hero() {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await getBanner();
+        const res = await getBanner(storeParams);
         const list = Array.isArray(res) ? res : res?.data || res?.data?.data || [];
         setBanners(list);
       } catch (e) {
@@ -35,7 +36,7 @@ export default function Hero() {
       }
     };
     load();
-  }, []);
+  }, [storeParams]);
 
   // Keep index valid if banners length changes
   useEffect(() => {
@@ -107,12 +108,12 @@ export default function Hero() {
   // Banner click handler
   const handleBannerClick = () => {
     if (current?.related_category_id) {
-      navigate(`/category/${current.related_category_id}`);
+      navigate(categoryPath(current.related_category_id, storeSlug));
     } else if (current?.related_product_id) {
       navigate(productDetailPath({
         id: current.related_product_id,
         slug: current.related_product_slug || current.related_product?.slug,
-      }));
+      }, storeSlug));
     }
   };
 

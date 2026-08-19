@@ -8,7 +8,7 @@ import { productDetailPath } from "../../../../utils/productRoute";
 
 const safeArray = (x) => (Array.isArray(x) ? x : []);
 
-const AllProduct = ({ categoryId = "" }) => {
+const AllProduct = ({ categoryId = "", storeParams = {}, storeSlug = "" }) => {
 	const navigate = useNavigate();
 
 	const allProductRef = React.useRef(null);
@@ -23,7 +23,7 @@ const AllProduct = ({ categoryId = "" }) => {
 	const loadProducts = useCallback(async ({ search = "", category = "", page = 1, per_page = 20 } = {}) => {
 		setLoading(true);
 		try {
-			const res = await getProduct({ page, per_page, search, category_id: category });
+			const res = await getProduct({ page, per_page, search, category_id: category, ...storeParams });
 			const payload = res?.data ?? res ?? {};
 			const list = payload?.data ?? payload ?? [];
 			setProducts(safeArray(list));
@@ -37,7 +37,7 @@ const AllProduct = ({ categoryId = "" }) => {
 		} finally {
 			setLoading(false);
 		}
-	}, []);
+	}, [storeParams]);
 
 	useEffect(() => {
 		const handler = (e) => {
@@ -60,7 +60,7 @@ const AllProduct = ({ categoryId = "" }) => {
 		if (value > 1) params.set("page", value);
 		if (query) params.set("search", query);
 		const qs = params.toString();
-		navigate(`/all-products${qs ? `?${qs}` : ""}`);
+		navigate(`${storeSlug ? `/store/${encodeURIComponent(String(storeSlug))}` : "/all-products"}${qs ? `?${qs}` : ""}`);
 	};
 
 	const list = useMemo(() => products, [products]);
@@ -101,7 +101,8 @@ const AllProduct = ({ categoryId = "" }) => {
 								<SmartProductCard
 									key={product.id}
 									product={product}
-									onView={() => navigate(productDetailPath(product))}
+									storeSlug={storeSlug}
+									onView={() => navigate(productDetailPath(product, storeSlug))}
 								/>
 							))
 						)}

@@ -24,14 +24,14 @@ const resolveImage = (product) => {
   return "https://via.placeholder.com/200x200?text=No+Image";
 };
 
-function DealCard({ product }) {
+function DealCard({ product, storeSlug = "" }) {
   const navigate = useNavigate();
   const theme = useTheme();
   const { price, displayPrice, hasSale, discountLabel } = getProductPricing(product);
 
   return (
     <Box
-      onClick={() => navigate(productDetailPath(product))}
+      onClick={() => navigate(productDetailPath(product, storeSlug))}
       sx={{
         flexShrink: 0,
         width: 130,
@@ -106,8 +106,9 @@ function DealCard({ product }) {
   );
 }
 
-export default function MobileDealsStrip() {
+export default function MobileDealsStrip({ storeParams = {} }) {
   const navigate = useNavigate();
+  const storeSlug = storeParams?.store_slug || "";
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -116,7 +117,7 @@ export default function MobileDealsStrip() {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await getTodayDealProduct({ page: 1, per_page: 12 });
+        const res = await getTodayDealProduct({ page: 1, per_page: 12, ...storeParams });
         const list = res?.data?.data ?? res?.data ?? res ?? [];
         if (mounted) setItems(safeArray(list));
       } catch (e) {
@@ -127,7 +128,7 @@ export default function MobileDealsStrip() {
     };
     load();
     return () => { mounted = false; };
-  }, []);
+  }, [storeParams]);
 
   if (!loading && items.length === 0) return null;
 
@@ -163,7 +164,7 @@ export default function MobileDealsStrip() {
             py: 0.3,
             borderRadius: 2,
           }}
-          onClick={() => navigate("/today-deals")}
+          onClick={() => navigate(storeSlug ? `/store/${encodeURIComponent(String(storeSlug))}/today-deals` : "/today-deals")}
         >
           See all →
         </Typography>
@@ -186,7 +187,7 @@ export default function MobileDealsStrip() {
           }}
         >
           {items.map((product) => (
-            <DealCard key={product.id} product={product} />
+            <DealCard key={product.id} product={product} storeSlug={storeSlug} />
           ))}
         </Box>
       )}

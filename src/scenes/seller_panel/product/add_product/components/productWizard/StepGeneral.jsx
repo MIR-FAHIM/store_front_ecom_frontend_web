@@ -8,6 +8,7 @@ function StepGeneral({
   onChange,
   errors = {},
   categories = [],
+  categoryOptions = [],
   brands = [],
   shops = [],
   onOpenDropdown,
@@ -19,6 +20,8 @@ function StepGeneral({
 }) {
 	const localUserId = useMemo(() => localStorage.getItem("userId") || "", []);
 	const shopOptions = Array.isArray(shops) ? shops : [];
+  const flatCategoryOptions = Array.isArray(categoryOptions) ? categoryOptions : [];
+  const useFlatCategoryOptions = flatCategoryOptions.length > 0;
   const quillModules = useMemo(
     () => ({
       toolbar: [
@@ -64,16 +67,19 @@ function StepGeneral({
         <FormControl fullWidth size="small" error={!!errors.category_id}>
           <InputLabel>Category</InputLabel>
           <Select
-            value={parentCategoryId}
+            value={useFlatCategoryOptions ? (value.category_id || "") : parentCategoryId}
             label="Category"
-            onChange={(e) => onParentCategoryChange?.(e.target.value)}
+            onChange={(e) => {
+              if (useFlatCategoryOptions) onChange({ category_id: e.target.value });
+              else onParentCategoryChange?.(e.target.value);
+            }}
           >
             <MenuItem value="">
               <em>Select category</em>
             </MenuItem>
-            {categories.map((cat) => (
+            {(useFlatCategoryOptions ? flatCategoryOptions : categories).map((cat) => (
               <MenuItem key={cat.id || cat._id} value={cat.id ?? cat._id}>
-                {cat.name}
+                {cat.label || cat.name}
               </MenuItem>
             ))}
           </Select>
@@ -81,7 +87,7 @@ function StepGeneral({
         </FormControl>
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      {!useFlatCategoryOptions ? <Grid item xs={12} md={6}>
         <FormControl fullWidth size="small" error={!!errors.category_id}>
           <InputLabel>Sub Category</InputLabel>
           <Select
@@ -106,7 +112,7 @@ function StepGeneral({
             <FormHelperText>{errors.category_id}</FormHelperText>
           ) : null}
         </FormControl>
-      </Grid>
+      </Grid> : null}
 
       <Grid item xs={12} md={6}>
         <FormControl fullWidth size="small">

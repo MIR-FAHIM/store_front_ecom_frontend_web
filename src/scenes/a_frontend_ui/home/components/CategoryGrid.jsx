@@ -2,15 +2,40 @@ import React from "react";
 import { Box, Card, CardActionArea, CardContent, Typography, useTheme } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { image_file_url } from "../../../../api/config";
+import { categoryPath } from "../../../../utils/productRoute";
 
-function CategoryCard({ cat }) {
+const isImageMedia = (media) => {
+  if (!media) return false;
+  if (typeof media === "object") {
+    return Boolean(media.url || media.external_link || media.file_name || media.file_original_name);
+  }
+  return !/^\d+$/.test(String(media).trim());
+};
+
+const resolveCategoryImage = (cat) => {
+  const media = [ cat?.cover_image].find(isImageMedia);
+  if (!media) return "/assets/images/placeholder.png";
+
+  if (typeof media === "object") {
+    const direct = media.url || media.external_link;
+    if (direct && /^https?:\/\//i.test(String(direct))) return String(direct);
+
+    const fileName = media.file_name || media.file_original_name;
+    if (fileName) {
+      return `${String(image_file_url || "").replace(/\/+$/, "")}/${String(fileName).replace(/^\/+/, "")}`;
+    }
+  }
+
+  const raw = String(media);
+  if (/^https?:\/\//i.test(raw)) return raw;
+  return `${String(image_file_url || "").replace(/\/+$/, "")}/${raw.replace(/^\/+/, "")}`;
+};
+
+function CategoryCard({ cat, storeSlug = "" }) {
   const navigate = useNavigate();
   const theme = useTheme();
 
-  const img =
-    cat?.banner?.url || (cat?.banner?.file_name ? `${image_file_url}/${cat.banner.file_name}` : null) ||
-    (cat?.cover_image ? `${image_file_url}/${cat.cover_image}` : null) ||
-    "/assets/images/placeholder.png";
+  const img = resolveCategoryImage(cat);
 
   return (
     <Card
@@ -22,7 +47,7 @@ function CategoryCard({ cat }) {
       }}
     >
       <CardActionArea
-        onClick={() => navigate(`/category/${cat.id}`)}
+        onClick={() => navigate(categoryPath(cat.id, storeSlug))}
         sx={{ height: "100%", p: 1.25, display: "flex", flexDirection: "column", gap: 1 }}
       >
         <Box
@@ -52,7 +77,7 @@ function CategoryCard({ cat }) {
   );
 }
 
-export default function CategoryGrid({ categories = [] }) {
+export default function CategoryGrid({ categories = [], storeSlug = "" }) {
   return (
     <Box
       sx={{
@@ -102,7 +127,7 @@ export default function CategoryGrid({ categories = [] }) {
       >
         {categories.map((c) => (
           <Box key={c.id} sx={{ minWidth: 0 }}>
-            <CategoryCard cat={c} />
+            <CategoryCard cat={c} storeSlug={storeSlug} />
           </Box>
         ))}
       </Box>

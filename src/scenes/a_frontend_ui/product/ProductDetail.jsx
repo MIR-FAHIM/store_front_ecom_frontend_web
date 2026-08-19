@@ -38,6 +38,7 @@ import ProductDetailImage from "./components/ProductDetailImage";
 import RelatedProduct from "./related_product/RelatedProduct";
 import ProductReview from "./review_product/ProductReview";
 import { tokens } from "../../../theme";
+import { storeHomePath } from "../../../utils/productRoute";
 
 const safeJsonParse = (value, fallback) => {
   try {
@@ -76,7 +77,7 @@ const stripHtml = (value) => {
 
 const ProductDetail = () => {
   const theme = useTheme();
-  const { idOrSlug: productIdentifier } = useParams();
+  const { idOrSlug: productIdentifier, slug } = useParams();
   const navigate = useNavigate();
 
   const colors = tokens(theme.palette.mode);
@@ -120,7 +121,7 @@ const ProductDetail = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await getProductDetails(productIdentifier);
+        const res = await getProductDetails(productIdentifier, slug ? { store_slug: slug } : {});
 
         // Your API: { status, message, data: {...product} }
         const p = res?.data?.data ?? res?.data ?? res;
@@ -139,7 +140,7 @@ const ProductDetail = () => {
       }
     };
     load();
-  }, [productIdentifier]);
+  }, [productIdentifier, slug]);
 
   // Images for thumbnails:
   // Your details response currently: images: [] and primary_image has file_name
@@ -409,7 +410,7 @@ const ProductDetail = () => {
       <Box sx={{ minHeight: "100vh", bgcolor: "background.default", display: "grid", placeItems: "center" }}>
         <Stack alignItems="center" spacing={2}>
           <Typography variant="h6" sx={{ fontWeight: 700, color: ink }}>Product not found</Typography>
-          <Button onClick={() => navigate("/")} variant="contained" sx={{ borderRadius: 999, textTransform: "none", fontWeight: 600 }}>
+          <Button onClick={() => navigate(storeHomePath(slug))} variant="contained" sx={{ borderRadius: 999, textTransform: "none", fontWeight: 600 }}>
             Back to home
           </Button>
         </Stack>
@@ -836,7 +837,7 @@ const ProductDetail = () => {
                       fullWidth
                       variant="outlined"
                       startIcon={<StorefrontIcon fontSize="small" />}
-                      onClick={() => navigate(`/shop/${product.shop.id}`)}
+                      onClick={() => navigate(slug ? storeHomePath(slug) : `/shop/${product.shop.id}`)}
                       sx={{
                         mt: 2,
                         borderRadius: 1,
@@ -855,7 +856,7 @@ const ProductDetail = () => {
                   </Box>
                 </Card>
               )}
-              <RelatedProduct productId={product?.id} />
+              <RelatedProduct productId={product?.id} storeSlug={slug} />
             </Grid>
             <Grid item xs={12} md={8}>
               

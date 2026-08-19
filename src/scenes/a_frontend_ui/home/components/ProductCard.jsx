@@ -129,6 +129,7 @@ export default function SmartProductCard({
   syncUserState = true,
   fromSeller = false,
   alwaysShowCartBar = false,
+  storeSlug = "",
 }) {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -150,7 +151,7 @@ export default function SmartProductCard({
   const subInk = colors.gray[300];
 
   const accent = theme.palette.mode === "dark" ? colors.blueAccent[400] : colors.blueAccent[100];
-  const detailHref = useMemo(() => productDetailPath(product), [product]);
+  const detailHref = useMemo(() => productDetailPath(product, storeSlug), [product, storeSlug]);
 
   const money = (n) =>
     new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT" }).format(Number(n || 0));
@@ -618,7 +619,7 @@ export default function SmartProductCard({
                 <Link
                   component="button"
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); navigate(`/shop/${product.shop.id}`); }}
+                  onClick={(e) => { e.stopPropagation(); navigate(storeSlug ? `/store/${encodeURIComponent(String(storeSlug))}` : `/shop/${product.shop.id}`); }}
                   sx={{ position: "relative", zIndex: 3, fontSize: 11, fontWeight: 700, color: accent, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
                 >
                   {product.shop?.shop_name || product.shop?.name || "View shop"}

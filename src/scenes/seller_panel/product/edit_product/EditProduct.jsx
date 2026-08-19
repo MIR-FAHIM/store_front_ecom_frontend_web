@@ -22,8 +22,10 @@ import {
 	addProductAttribute,
 } from "../../../../api/controller/admin_controller/product/product_controller";
 import { getAllShops } from "../../../../api/controller/admin_controller/shop/shop_controller.jsx";
-import { getCategory, getBrand } from "../../../../api/controller/admin_controller/product/setting_controller";
-import { getCategoryChildren, getProductCategoryDetails } from "../../../../api/controller/admin_controller/product/product_setting_controller.jsx";
+import { getBrand } from "../../../../api/controller/admin_controller/product/setting_controller";
+import { getProductCategoryDetails } from "../../../../api/controller/admin_controller/product/product_setting_controller.jsx";
+import { fetchSellerMarketplaceCategories } from "../../../../api/controller/admin_controller/category/store_category_controller.jsx";
+import { filterActiveCategoryTree, flattenCategoryTree, normalizeCategoryList } from "../../../../utils/categoryTree";
 import { PRODUCT_WIZARD_STEPS } from "../add_product/components/productWizard/steps";
 import StepGeneral from "../add_product/components/productWizard/StepGeneral";
 import StepDiscountSeo from "../../../admin_panel/product/add_product/components/productWizard/StepDiscountSeo";
@@ -36,6 +38,7 @@ const DEFAULT_GENERAL = {
 	category_id: "",
 	brand_id: "",
 	user_id: "",
+	shop_id: "",
 	added_by: 1,
 	description: "",
 	unit_price: "",
@@ -86,6 +89,16 @@ function EditProductSeller() {
 	const [parentCategoryId, setParentCategoryId] = useState("");
 	const [subCategories, setSubCategories] = useState([]);
 	const [loadingSubCategories, setLoadingSubCategories] = useState(false);
+	const categoryOptions = useMemo(
+		() =>
+			flattenCategoryTree(categories)
+				.filter((category) => category?.is_active_for_store === true)
+				.map((category) => ({
+					...category,
+					label: `${"  ".repeat(category.depth || 0)}${category.name || "Category"}`,
+				})),
+		[categories]
+	);
 
 	const normalizeList = (x) => {
 		if (!x) return [];
@@ -106,19 +119,34 @@ function EditProductSeller() {
 		return [];
 	};
 
+	const resolveSellerStoreId = (shops = [], preferredId = "") => {
+		if (preferredId) return preferredId;
+		const storedId = localStorage.getItem("storeId") || localStorage.getItem("shopId");
+		if (storedId) return storedId;
+		return shops[0]?.id ? String(shops[0].id) : "";
+	};
+
 	const loadDropdowns = async () => {
 		try {
-			const [cRes, bRes, vRes] = await Promise.all([
-				getCategory(),
+			const [bRes, vRes] = await Promise.all([
 				getBrand(),
 				getAllShops(),
 			]);
 
-			setCategories(normalizeList(cRes));
+			const shops = normalizeList(vRes);
+			const nextStoreId = resolveSellerStoreId(shops, general.shop_id);
+			let activeCategories = [];
+			if (nextStoreId) {
+				const cRes = await fetchSellerMarketplaceCategories(nextStoreId);
+				activeCategories = filterActiveCategoryTree(normalizeCategoryList(cRes));
+			}
+
+			setCategories(activeCategories);
 			setBrands(normalizeList(bRes));
-			setShops(normalizeList(vRes));
+			setShops(shops);
 		} catch (e) {
 			console.error("Error loading dropdowns:", e);
+			setCategories([]);
 		}
 	};
 
@@ -195,6 +223,7 @@ function EditProductSeller() {
 				slug: product?.slug ?? "",
 				category_id: product?.category_id ?? "",
 				brand_id: product?.brand_id ?? "",
+				shop_id: product?.shop_id ?? product?.store_id ?? "",
 				user_id: product?.user_id ?? localStorage.getItem("userId") ?? "",
 				added_by: product?.added_by ?? localStorage.getItem("userId") ?? 1,
 				description: product?.description ?? "",
@@ -228,6 +257,17 @@ function EditProductSeller() {
 			});
 
 			setImages(buildImageList(product));
+
+			const productStoreId = product?.shop_id ?? product?.store_id ?? "";
+			if (productStoreId) {
+				try {
+					localStorage.setItem("storeId", String(productStoreId));
+					const cRes = await fetchSellerMarketplaceCategories(productStoreId);
+					setCategories(filterActiveCategoryTree(normalizeCategoryList(cRes)));
+				} catch (e) {
+					console.error("Failed to load product store categories:", e);
+				}
+			}
 
 			const categoryId = product?.category_id;
 			if (categoryId) {
@@ -266,8 +306,8 @@ function EditProductSeller() {
 
 			setLoadingSubCategories(true);
 			try {
-				const res = await getCategoryChildren(parentCategoryId);
-				const list = normalizeList(res);
+				const parent = categories.find((cat) => String(cat?.id ?? cat?._id) === String(parentCategoryId));
+				const list = Array.isArray(parent?.children) ? parent.children : [];
 				setSubCategories(list);
 				setGeneral((prev) => {
 					if (list.length === 0) return { ...prev, category_id: parentCategoryId };
@@ -283,7 +323,7 @@ function EditProductSeller() {
 		};
 
 		loadSubCategories();
-	}, [parentCategoryId]);
+	}, [parentCategoryId, categories]);
 
 	const canGoBack = step > 0;
 	const canGoNext = step < PRODUCT_WIZARD_STEPS.length - 1;
@@ -411,7 +451,11 @@ function EditProductSeller() {
 			}, 1500);
 		} catch (error) {
 			console.error("Product update error:", error);
-			setErrorMessage(error.response?.data?.message || error.message || "Failed to update product");
+			const backendMessage = error.response?.data?.message || error.message || "Failed to update product";
+			if (backendMessage === "This category is not active for your store.") {
+				setErrors((prev) => ({ ...prev, category_id: backendMessage }));
+			}
+			setErrorMessage(backendMessage);
 		} finally {
 			setLoading(false);
 		}
@@ -434,6 +478,7 @@ function EditProductSeller() {
 					onOpenDropdown={loadDropdowns}
 					errors={errors}
 					categories={categories}
+					categoryOptions={categoryOptions}
 					brands={brands}
 					shops={shops}
 				/>

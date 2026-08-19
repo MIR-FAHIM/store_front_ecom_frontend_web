@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Box, CircularProgress, Pagination, Stack, Typography } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getFeaturedProduct } from "../../../api/controller/admin_controller/product/product_controller";
 import FeaturedTitle from "./components/FeaturedTitle";
 import SmartProductCard from "./components/ProductCard";
@@ -10,6 +10,7 @@ const safeArray = (x) => (Array.isArray(x) ? x : []);
 
 const FeaturedProductList = () => {
 	const navigate = useNavigate();
+	const { slug } = useParams();
 	const [products, setProducts] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [page, setPage] = useState(1);
@@ -20,7 +21,7 @@ const FeaturedProductList = () => {
 	const loadProducts = useCallback(async (pg = 1) => {
 		setLoading(true);
 		try {
-			const res = await getFeaturedProduct({ page: pg, per_page: perPage });
+			const res = await getFeaturedProduct({ page: pg, per_page: perPage, ...(slug ? { store_slug: slug } : {}) });
 			const payload = res?.data ?? res ?? {};
 			const list = payload?.data ?? payload ?? [];
 			setProducts(safeArray(list));
@@ -35,7 +36,7 @@ const FeaturedProductList = () => {
 		} finally {
 			setLoading(false);
 		}
-	}, [perPage]);
+	}, [perPage, slug]);
 
 	useEffect(() => {
 		loadProducts(1);
@@ -88,7 +89,8 @@ const FeaturedProductList = () => {
 								<SmartProductCard
 									key={product.id}
 									product={product}
-									onView={() => navigate(productDetailPath(product))}
+									storeSlug={slug}
+									onView={() => navigate(productDetailPath(product, slug))}
 								/>
 							))
 						)}

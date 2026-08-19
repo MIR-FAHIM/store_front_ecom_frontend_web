@@ -50,13 +50,16 @@ import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
 import LabelOutlinedIcon from "@mui/icons-material/LabelOutlined";
 
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { tokens } from "../../../theme.js";
 import { image_file_url } from "../../../api/config/index.jsx";
 import { getUserDetail } from "../../../api/controller/admin_controller/user_controller.jsx";
 import { getWebsiteSetting } from "../../../api/controller/admin_controller/website_setting/website_setting_controller.jsx";
 import { getUserWish } from "../../../api/controller/admin_controller/wishlist/wish_controller";
 import { getCategoryWithAllChildren } from "../../../api/controller/admin_controller/category/category_controller";
+import { fetchPublicStoreCategories } from "../../../api/controller/admin_controller/category/store_category_controller";
+import { normalizeCategoryList } from "../../../utils/categoryTree";
+import { categoriesPath, categoryPath, storeHomePath } from "../../../utils/productRoute";
 import SearchProduct from "../search_product/SearchProduct.jsx";
 import { useTranslation } from "react-i18next";
 
@@ -74,7 +77,7 @@ const safeArray = (value) => (Array.isArray(value) ? value : []);
 
 // ─── Mega Menu ────────────────────────────────────────────────────────────────
 
-const MegaMenu = ({ open, anchorEl, categories, onClose, navigate, colors, border }) => {
+const MegaMenu = ({ open, anchorEl, categories, onClose, navigate, colors, border, storeSlug = "" }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const closeTimer = useRef(null);
 
@@ -147,7 +150,7 @@ const MegaMenu = ({ open, anchorEl, categories, onClose, navigate, colors, borde
                     onMouseEnter={() => setActiveIndex(idx)}
                     onClick={() => {
                       onClose();
-                      if (cat?.id) navigate(`/category/${cat.id}`);
+                      if (cat?.id) navigate(categoryPath(cat.id, storeSlug));
                     }}
                     sx={{
                       display: "flex",
@@ -225,7 +228,7 @@ const MegaMenu = ({ open, anchorEl, categories, onClose, navigate, colors, borde
               {/* See all */}
               <Divider sx={{ opacity: 0.1, my: 0.5 }} />
               <Box
-                onClick={() => { onClose(); navigate("/categories"); }}
+                onClick={() => { onClose(); navigate(categoriesPath(storeSlug)); }}
                 sx={{
                   px: 1.5,
                   py: 0.9,
@@ -298,7 +301,7 @@ const MegaMenu = ({ open, anchorEl, categories, onClose, navigate, colors, borde
                       onClick={() => {
                         onClose();
                         if (activeCategory?.id)
-                          navigate(`/category/${activeCategory.id}`);
+                          navigate(categoryPath(activeCategory.id, storeSlug));
                       }}
                       sx={{
                         fontSize: "0.72rem",
@@ -328,7 +331,7 @@ const MegaMenu = ({ open, anchorEl, categories, onClose, navigate, colors, borde
                           <Typography
                             onClick={() => {
                               onClose();
-                              if (child?.id) navigate(`/category/${child.id}`);
+                              if (child?.id) navigate(categoryPath(child.id, storeSlug));
                             }}
                             sx={{
                               fontSize: "0.78rem",
@@ -360,7 +363,7 @@ const MegaMenu = ({ open, anchorEl, categories, onClose, navigate, colors, borde
                                 onClick={() => {
                                   onClose();
                                   if (leaf?.id)
-                                    navigate(`/category/${leaf.id}`);
+                                    navigate(categoryPath(leaf.id, storeSlug));
                                 }}
                                 sx={{
                                   fontSize: "0.72rem",
@@ -382,7 +385,7 @@ const MegaMenu = ({ open, anchorEl, categories, onClose, navigate, colors, borde
                                 onClick={() => {
                                   onClose();
                                   if (child?.id)
-                                    navigate(`/category/${child.id}`);
+                                    navigate(categoryPath(child.id, storeSlug));
                                 }}
                                 sx={{
                                   fontSize: "0.7rem",
@@ -415,14 +418,14 @@ const MegaMenu = ({ open, anchorEl, categories, onClose, navigate, colors, borde
 // ─── Mobile Drawer ────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { label: "Home", path: "/", icon: <HomeOutlinedIcon fontSize="small" /> },
+  { label: "Home", path: "/", key: "home", icon: <HomeOutlinedIcon fontSize="small" /> },
   { label: "Flash Sale", path: "/flash-sale", icon: <LocalOfferOutlinedIcon fontSize="small" /> },
   { label: "Blogs", path: "/blogs", icon: <ArticleOutlinedIcon fontSize="small" /> },
   { label: "All Brands", path: "/brands", icon: <LabelOutlinedIcon fontSize="small" /> },
-  { label: "All Categories", path: "/categories", icon: <CategoryOutlinedIcon fontSize="small" /> },
+  { label: "All Categories", path: "/categories", key: "categories", icon: <CategoryOutlinedIcon fontSize="small" /> },
 ];
 
-function MobileDrawer({ open, onClose, navigate, categories, colors, border, glass, user, initials, t, i18n, handleLangChange, handleLogout }) {
+function MobileDrawer({ open, onClose, navigate, categories, colors, border, glass, user, initials, t, i18n, handleLangChange, handleLogout, storeSlug = "" }) {
   const [catOpen, setCatOpen] = useState(false);
   const [expandedCat, setExpandedCat] = useState(null);
 
@@ -465,12 +468,19 @@ function MobileDrawer({ open, onClose, navigate, categories, colors, border, gla
       <Box sx={{ flex: 1, overflowY: "auto", "&::-webkit-scrollbar": { width: 4 }, "&::-webkit-scrollbar-thumb": { background: colors.primary[300], borderRadius: 999 } }}>
         <List dense disablePadding>
           {/* Nav links */}
-          {NAV_ITEMS.map((item) => (
-            <ListItemButton key={item.path} onClick={() => { onClose(); navigate(item.path); }} sx={{ px: 2, py: 1, "&:hover": { bgcolor: colors.primary[400] } }}>
-              <ListItemIcon sx={{ minWidth: 30, color: colors.gray[400] }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: 13, fontWeight: 600, color: colors.gray[100] }} />
-            </ListItemButton>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const path = item.key === "home"
+              ? storeHomePath(storeSlug)
+              : item.key === "categories"
+                ? categoriesPath(storeSlug)
+                : item.path;
+            return (
+              <ListItemButton key={item.path} onClick={() => { onClose(); navigate(path); }} sx={{ px: 2, py: 1, "&:hover": { bgcolor: colors.primary[400] } }}>
+                <ListItemIcon sx={{ minWidth: 30, color: colors.gray[400] }}>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: 13, fontWeight: 600, color: colors.gray[100] }} />
+              </ListItemButton>
+            );
+          })}
 
           <Divider sx={{ opacity: 0.1, my: 0.5 }} />
 
@@ -491,7 +501,7 @@ function MobileDrawer({ open, onClose, navigate, categories, colors, border, gla
                   <Collapse in={expandedCat === cat.id} timeout="auto" unmountOnExit>
                     <List dense disablePadding>
                       {safeArray(cat.children).map((child) => (
-                        <ListItemButton key={child.id ?? child.name} onClick={() => { onClose(); navigate(`/category/${child.id}`); }} sx={{ pl: 6, pr: 2, py: 0.5, "&:hover": { bgcolor: colors.primary[400] } }}>
+                        <ListItemButton key={child.id ?? child.name} onClick={() => { onClose(); navigate(categoryPath(child.id, storeSlug)); }} sx={{ pl: 6, pr: 2, py: 0.5, "&:hover": { bgcolor: colors.primary[400] } }}>
                           <ListItemText primary={child.name} primaryTypographyProps={{ fontSize: 12, color: colors.gray[400] }} />
                         </ListItemButton>
                       ))}
@@ -499,7 +509,7 @@ function MobileDrawer({ open, onClose, navigate, categories, colors, border, gla
                   </Collapse>
                 </Box>
               ))}
-              <ListItemButton onClick={() => { onClose(); navigate("/categories"); }} sx={{ pl: 4, pr: 2, py: 0.8 }}>
+              <ListItemButton onClick={() => { onClose(); navigate(categoriesPath(storeSlug)); }} sx={{ pl: 4, pr: 2, py: 0.8 }}>
                 <ListItemText primary="See all categories →" primaryTypographyProps={{ fontSize: 12, fontWeight: 700, color: colors.greenAccent?.[400] || "#4cceac" }} />
               </ListItemButton>
             </List>
@@ -570,6 +580,9 @@ function MobileDrawer({ open, onClose, navigate, categories, colors, border, gla
 
 const Topbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const storeMatch = location.pathname.match(/^\/store\/([^/]+)/);
+  const storeSlug = storeMatch ? decodeURIComponent(storeMatch[1]) : "";
   const theme = useTheme();
   const { t, i18n } = useTranslation();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -660,13 +673,13 @@ const Topbar = () => {
       } catch { setUser(null); }
     };
 
-    // ✅ Use getCategoryWithAllChildren instead of getCategory
     const loadCategories = async () => {
       setLoadingCategories(true);
       try {
-        const res = await getCategoryWithAllChildren();
-        const payload = res?.data ?? res;
-        setCategories(safeArray(payload?.data ?? payload));
+        const res = storeSlug
+          ? await fetchPublicStoreCategories(storeSlug)
+          : await getCategoryWithAllChildren();
+        setCategories(safeArray(normalizeCategoryList(res)));
       } catch { setCategories([]); }
       finally { setLoadingCategories(false); }
     };
@@ -686,7 +699,7 @@ const Topbar = () => {
       window.removeEventListener("cart-updated", onCart);
       window.removeEventListener("wishlist-updated", onCart);
     };
-  }, []);
+  }, [storeSlug]);
 
   // Mega menu hover handlers
   const handleCategoryBtnMouseEnter = () => {
@@ -755,7 +768,7 @@ const Topbar = () => {
               <MenuIcon />
             </IconButton>
           )}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, cursor: "pointer", userSelect: "none" }} onClick={() => navigate("/")}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, cursor: "pointer", userSelect: "none" }} onClick={() => navigate(storeHomePath(storeSlug))}>
             <Box sx={{ width: { xs: 34, sm: 38 }, height: { xs: 34, sm: 38 }, borderRadius: 2.5, border: `1px solid ${border}`, background: glass, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
               {brand.logoUrl ? (
                 <Box component="img" src={brand.logoUrl} alt={brand.name} sx={{ width: "100%", height: "100%", objectFit: "contain" }} />
@@ -776,7 +789,7 @@ const Topbar = () => {
 
         {/* Center: search (hidden on xs) */}
         <Box sx={{ flex: 1, mx: { sm: 2, md: 3 }, display: { xs: "none", sm: "block" }, maxWidth: 720 }}>
-          <SearchProduct placeholder={t("topbar.searchPlaceholder")} />
+          <SearchProduct placeholder={t("topbar.searchPlaceholder")} storeSlug={storeSlug} />
         </Box>
 
         {/* Right: actions */}
@@ -935,6 +948,7 @@ const Topbar = () => {
             navigate={navigate}
             colors={colors}
             border={border}
+            storeSlug={storeSlug}
           />
         </Box>
 
@@ -942,11 +956,11 @@ const Topbar = () => {
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, whiteSpace: "nowrap", flex: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             {[
-              { label: "Home", path: "/" },
+              { label: "Home", path: storeHomePath(storeSlug) },
               { label: "Flash Sale", path: "/flash-sale" },
               { label: "Blogs", path: "/blogs" },
               { label: "All Brands", path: "/brands" },
-              { label: "All Categories", path: "/categories" },
+              { label: "All Categories", path: categoriesPath(storeSlug) },
             ].map((item) => (
               <Button
                 key={item.label}
@@ -972,7 +986,7 @@ const Topbar = () => {
 
       {/* Mobile Search row */}
       <Box sx={{ px: 1.5, pb: 1, display: { xs: "block", sm: "none" } }}>
-        <SearchProduct isMobile placeholder="Search products..." />
+        <SearchProduct isMobile placeholder="Search products..." storeSlug={storeSlug} />
       </Box>
     </AppBar>
 
@@ -991,6 +1005,7 @@ const Topbar = () => {
       i18n={i18n}
       handleLangChange={handleLangChange}
       handleLogout={handleLogout}
+      storeSlug={storeSlug}
     />
     </>
   );

@@ -8,7 +8,7 @@ import HorizontalProductCard from "../../../a_frontend_ui/product/components/Hor
 
 const safeArray = (x) => (Array.isArray(x) ? x : []);
 
-export default function BestSellingProduct({ onView }) {
+export default function BestSellingProduct({ onView, storeParams = {} }) {
   const theme = useTheme();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
@@ -19,7 +19,7 @@ export default function BestSellingProduct({ onView }) {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await getFeaturedProduct({ page: 1, per_page: 8 });
+        const res = await getFeaturedProduct({ page: 1, per_page: 8, ...storeParams });
         const list = res?.data?.data ?? res?.data ?? res ?? [];
         if (mounted) setItems(safeArray(list));
       } catch (e) {
@@ -34,13 +34,13 @@ export default function BestSellingProduct({ onView }) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [storeParams]);
 
   useEffect(() => {
     let mounted = true;
     const loadBanner = async () => {
       try {
-        const res = await getBanner();
+        const res = await getBanner(storeParams);
         const list = Array.isArray(res) ? res : res?.data || res?.data?.data || [];
         const first = list?.[2] || null;
         if (!first) return;
@@ -64,7 +64,7 @@ export default function BestSellingProduct({ onView }) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [storeParams]);
 
   const content = useMemo(() => {
     if (loading) {

@@ -38,7 +38,7 @@ import {
   LocalOfferOutlined,
   CardMembershipOutlined,
 } from "@mui/icons-material";
-import defaultLogo from "../../../assets/images/logo.png";
+import defaultLogo from "../../../assets/logo/store_myzoo_white.png";
 import { ToggledContext } from "../../../App";
 import { appClient, appLogo, appname } from "../../../api/config/index";
 import { getProjectText } from "../../../config/projectSettings";
@@ -345,7 +345,7 @@ const SideBar = () => {
               }}
             >
               {brandLogo ? (
-                <img src={brandLogo} alt="logo" style={{ width: 20, height: 20, objectFit: "contain", filter: "brightness(10)" }} />
+                <img src={brandLogo} alt="logo" style={{ width: collapsed ? 24 : 82, height: 24, objectFit: "contain" }} />
               ) : (
                 <Typography sx={{ color: "#fff", fontSize: 14, fontWeight: 800, lineHeight: 1 }}>
                   {appname.charAt(0).toUpperCase()}

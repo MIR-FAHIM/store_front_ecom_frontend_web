@@ -29,6 +29,7 @@ import {
   ArrowForwardOutlined,
   ReceiptLongOutlined,
   PointOfSaleOutlined,
+  WorkspacePremiumOutlined,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { getShopReport, getShopMonthReport } from "../../../api/controller/admin_controller/report/report_controller";
@@ -166,16 +167,16 @@ const SellerDashboard = () => {
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1280, mx: "auto" }}>
 
-      {/* ─── Hero header ─── */}
-      <Card variant="outlined" sx={{ borderRadius: 3, mb: 3, overflow: "hidden", border: "none", background: `linear-gradient(135deg, ${ACCENT} 0%, ${PURPLE} 50%, #ec4899 100%)` }}>
+      {/* ─── Store onboarding header ─── */}
+      <Card variant="outlined" sx={{ borderRadius: 3, mb: 3, overflow: "hidden", border: "none", background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 52%, #0f766e 100%)" }}>
         <CardContent sx={{ py: { xs: 3, md: 4 }, px: { xs: 2.5, md: 4 } }}>
           <Stack direction={{ xs: "column", md: "row" }} alignItems={{ md: "center" }} justifyContent="space-between" spacing={2}>
             <Box>
               <Typography variant="h4" sx={{ fontWeight: 900, color: "#fff", letterSpacing: -0.5, mb: 0.5 }}>
-                Welcome back! 👋
+                Start with your store package
               </Typography>
               <Typography variant="body2" sx={{ color: "rgba(255,255,255,.75)", maxWidth: 420 }}>
-                Track your sales, manage orders, and grow your business — all from one place.
+                Activate a subscription first, then publish products, take orders, use POS, and share your public storefront.
               </Typography>
             </Box>
             <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
@@ -189,13 +190,21 @@ const SellerDashboard = () => {
                 sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 700, bgcolor: "#fff", color: ACCENT, "&:hover": { bgcolor: "#f0f0ff" }, boxShadow: "0 4px 16px rgba(0,0,0,.15)" }}>
                 New Product
               </Button>
+              <Button variant="contained" startIcon={<WorkspacePremiumOutlined />} onClick={() => navigate("/seller/packages")}
+                sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 800, bgcolor: "#22c55e", color: "#fff", "&:hover": { bgcolor: "#16a34a" }, boxShadow: "0 4px 16px rgba(0,0,0,.15)" }}>
+                Buy Package
+              </Button>
             </Stack>
           </Stack>
         </CardContent>
       </Card>
 
-      {/* ─── Stat Cards ─── */}
+      {/* ─── Subscription first ─── */}
       <SubscriptionWidget />
+
+      <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 1.5 }}>
+        Store readiness after package activation
+      </Typography>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {stats.map((s) => (

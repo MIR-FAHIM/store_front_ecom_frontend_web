@@ -16,11 +16,11 @@ import {
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { getProduct } from "../../../../api/controller/admin_controller/product/product_controller";
 import SmartProductCard from "../../home/components/ProductCard";
-import { productDetailPath } from "../../../../utils/productRoute";
+import { productDetailPath, storeHomePath } from "../../../../utils/productRoute";
 
 const safeArray = (x) => (Array.isArray(x) ? x : []);
 const PER_PAGE = 24;
@@ -28,6 +28,7 @@ const PER_PAGE = 24;
 const AllProductsPage = () => {
 	const theme = useTheme();
 	const navigate = useNavigate();
+	const { slug } = useParams();
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const pageParam = Number(searchParams.get("page") || 1);
@@ -44,7 +45,7 @@ const AllProductsPage = () => {
 	const loadProducts = useCallback(async (page, search) => {
 		setLoading(true);
 		try {
-			const res = await getProduct({ page, per_page: PER_PAGE, search });
+			const res = await getProduct({ page, per_page: PER_PAGE, search, ...(slug ? { store_slug: slug } : {}) });
 			const payload = res?.data ?? res ?? {};
 			const list = payload?.data ?? payload ?? [];
 			setProducts(safeArray(list));
@@ -58,7 +59,7 @@ const AllProductsPage = () => {
 		} finally {
 			setLoading(false);
 		}
-	}, []);
+	}, [slug]);
 
 	// Sync URL params → local state and load on mount / param changes
 	useEffect(() => {
@@ -109,7 +110,7 @@ const AllProductsPage = () => {
 						sx={{ mb: 2, "& .MuiBreadcrumbs-separator": { color: "rgba(255,255,255,0.5)" } }}
 					>
 						<Link
-							href="/"
+							href={storeHomePath(slug)}
 							underline="hover"
 							sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "rgba(255,255,255,0.7)", fontSize: 14 }}
 						>
@@ -221,7 +222,8 @@ const AllProductsPage = () => {
 								<SmartProductCard
 									key={product.id}
 									product={product}
-									onView={() => navigate(productDetailPath(product))}
+									storeSlug={slug}
+									onView={() => navigate(productDetailPath(product, slug))}
 								/>
 							))}
 						</Box>

@@ -1,13 +1,16 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Box,
   Container,
+  Chip,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { getCategory } from "../../../api/controller/admin_controller/product/setting_controller";
+import { fetchPublicStoreCategories } from "../../../api/controller/admin_controller/category/store_category_controller";
+import { normalizeCategoryList } from "../../../utils/categoryTree";
 import Hero from "./components/Hero";
 import CategoryGrid from "./components/CategoryGrid";
 import FeaturedCategory from "./components/FeaturedCategory";
@@ -29,6 +32,10 @@ const HomeP1 = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navigate = useNavigate();
+  const { slug } = useParams();
+  const storeParams = useMemo(() => (slug ? { store_slug: slug } : {}), [slug]);
+  const isStorefront = Boolean(slug);
+  const productPath = useCallback((product) => productDetailPath(product, slug), [slug]);
 
   const pageBg = theme.palette.background?.default || "#fff";
 
@@ -39,8 +46,8 @@ const HomeP1 = () => {
 
   const loadCategories = useCallback(async () => {
     try {
-      const c = await getCategory();
-      const list = Array.isArray(c) ? c : c?.data?.data || [];
+      const c = isStorefront ? await fetchPublicStoreCategories(slug) : await getCategory(storeParams);
+      const list = normalizeCategoryList(c);
 
       // Keep nested structure (top-level categories with `children` array)
       setCategories(safeArray(list));
@@ -48,14 +55,14 @@ const HomeP1 = () => {
       console.error("loadCategories error:", e);
       setCategories([]);
     }
-  }, []);
+  }, [isStorefront, slug, storeParams]);
 
   useEffect(() => {
     loadCategories();
   }, [loadCategories]);
 
   if (isMobile) {
-    return <MobileHome />;
+    return <MobileHome storeParams={storeParams} isStorefront={isStorefront} />;
   }
 
   return (
@@ -75,6 +82,12 @@ const HomeP1 = () => {
     >
       <Container sx={{ py: { xs: 2, md: 3 } }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 2.5, md: 3 } }}>
+          {isStorefront ? (
+            <Chip
+              label={`Storefront: ${slug}`}
+              sx={{ alignSelf: "flex-start", borderRadius: 1, fontWeight: 900, bgcolor: "#eef2ff", color: "#3730a3" }}
+            />
+          ) : null}
           <Box
               sx={{
                 display: "grid",
@@ -87,22 +100,23 @@ const HomeP1 = () => {
               }}
             >
               <Box sx={{ height: { md: 520 } }}>
-                <Hero />
+                <Hero storeParams={storeParams} />
               </Box>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, height: { md: 520 } }}>
                 <Box sx={{ height: { md: 320 } }}>
-                  <CategoryGrid categories={categories} />
+                  {categories.length > 0 || !isStorefront ? <CategoryGrid categories={categories} storeSlug={slug} /> : null}
                 </Box>
                 <Box sx={{ height: { md: 180 } }}>
                   <TodayDealProduct
                     compact
                     title="Today Deals"
-                    onView={(product) => navigate(productDetailPath(product))}
+                    storeParams={storeParams}
+                    onView={(product) => navigate(productPath(product))}
                   />
                 </Box>
               </Box>
             </Box>
-          <FeaturedCategory categories={categories} />
+          {categories.length > 0 || !isStorefront ? <FeaturedCategory categories={categories} storeSlug={slug} /> : null}
            
        
 
@@ -120,26 +134,29 @@ const HomeP1 = () => {
             }}
           >
             <FeaturedProduct
-              onView={(product) => navigate(productDetailPath(product))}
+              storeParams={storeParams}
+              onView={(product) => navigate(productPath(product))}
             />
-            <TodayDealBox onView={(product) => navigate(productDetailPath(product))} />
+            <TodayDealBox storeParams={storeParams} onView={(product) => navigate(productPath(product))} />
           </Box>
-          <BannerRow />
-          <BestSellingProduct onView={(product) => navigate(productDetailPath(product))} />
+          <BannerRow storeParams={storeParams} />
+          <BestSellingProduct storeParams={storeParams} onView={(product) => navigate(productPath(product))} />
           <CategoryWiseProductHome
-            onView={(product) => navigate(productDetailPath(product))}
+            onView={(product) => navigate(productPath(product))}
             category_id={4}
             color={"#ecddec"}
+            storeParams={storeParams}
           
           />
           <CategoryWiseProductHome
-            onView={(product) => navigate(productDetailPath(product))}
+            onView={(product) => navigate(productPath(product))}
             category_id={5}
             color={"#f5d9e4"}
+            storeParams={storeParams}
           
           />
-          <HomeShopList />
-          <AllProduct />
+          {!isStorefront ? <HomeShopList /> : null}
+          <AllProduct storeParams={storeParams} storeSlug={slug} />
         
         </Box>
       </Container>

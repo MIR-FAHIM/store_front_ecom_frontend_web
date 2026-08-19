@@ -15,9 +15,10 @@ export const addBanner = async (data) => {
   
   }
 
-export const getBanner = async () => {
+export const getBanner = async (params = {}) => {
   try {
     const response = await axiosInstance.get(`/api/banners/active`,
+      { params }
         
     );
     return response.data;

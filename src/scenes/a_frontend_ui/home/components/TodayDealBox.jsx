@@ -8,7 +8,7 @@ import FeaturedTitle from "./FeaturedTitle";
 
 const safeArray = (x) => (Array.isArray(x) ? x : []);
 
-export default function TodayDealBox({ onView }) {
+export default function TodayDealBox({ onView, storeParams = {} }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -20,7 +20,7 @@ export default function TodayDealBox({ onView }) {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await getTodayDealProduct({ page: 1, per_page: 20 });
+        const res = await getTodayDealProduct({ page: 1, per_page: 20, ...storeParams });
         const list = res?.data?.data ?? res?.data ?? res ?? [];
         if (mounted) setItems(safeArray(list));
       } catch (e) {
@@ -35,7 +35,7 @@ export default function TodayDealBox({ onView }) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [storeParams]);
 
   useEffect(() => {
     if (!items.length) return;

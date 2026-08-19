@@ -32,10 +32,12 @@ export const getBrand = async (params = {}) => {
     return [];
   }
 }
-export const getCategory = async () => {
+export const getCategory = async (params = {}) => {
   try {
     const response = await axiosInstance.get(`/api/categories/list`,
         {
+            params,
+            skipAuth: Boolean(params?.store_slug || params?.store_id),
             headers: {  
               'Authorization': `Bearer ${localStorage.getItem("authToken")}`, // Add the token in Authorization header
             },

@@ -8,7 +8,7 @@ import HorizontalProductCard from "../../../a_frontend_ui/product/components/Hor
 
 const safeArray = (x) => (Array.isArray(x) ? x : []);
 
-export default function TodayDealProduct({ onView, compact = false, title }) {
+export default function TodayDealProduct({ onView, compact = false, title, storeParams = {} }) {
     const navigate = useNavigate();
     const scrollRef = useRef(null);
 
@@ -21,7 +21,7 @@ export default function TodayDealProduct({ onView, compact = false, title }) {
         const load = async () => {
             setLoading(true);
             try {
-                const res = await getTodayDealProduct({ page: 1, per_page: 50 });
+                const res = await getTodayDealProduct({ page: 1, per_page: 50, ...storeParams });
                 const list = res?.data?.data ?? res?.data ?? res ?? [];
                 if (mounted) setItems(safeArray(list));
             } catch (e) {
@@ -36,7 +36,7 @@ export default function TodayDealProduct({ onView, compact = false, title }) {
         return () => {
             mounted = false;
         };
-    }, []);
+    }, [storeParams]);
 
     const content = useMemo(() => {
         if (loading) {

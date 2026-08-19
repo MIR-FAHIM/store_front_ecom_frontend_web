@@ -14,7 +14,7 @@ const resolveBg = (banner) => {
   return "/assets/images/banner.jpg";
 };
 
-export default function MobileHero() {
+export default function MobileHero({ storeParams = {} }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const [banners, setBanners] = useState([]);
@@ -26,7 +26,7 @@ export default function MobileHero() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await getBanner();
+        const res = await getBanner(storeParams);
         const list = Array.isArray(res) ? res : res?.data || res?.data?.data || [];
         setBanners(list.slice(0, 5));
       } catch (e) {
@@ -36,7 +36,7 @@ export default function MobileHero() {
       }
     };
     load();
-  }, []);
+  }, [storeParams]);
 
   useEffect(() => {
     if (banners.length <= 1) return;

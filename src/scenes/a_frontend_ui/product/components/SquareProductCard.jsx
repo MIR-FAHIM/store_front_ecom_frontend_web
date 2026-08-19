@@ -25,7 +25,7 @@ const resolveImage = (product) => {
   return "https://via.placeholder.com/600x400?text=No+Image";
 };
 
-export default function SquareProductCard({ product, onView, size = 140 }) {
+export default function SquareProductCard({ product, onView, size = 140, storeSlug = "" }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const colors = tokens(theme.palette.mode);
@@ -134,7 +134,7 @@ export default function SquareProductCard({ product, onView, size = 140 }) {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/shop/${product.shop.id}`);
+                navigate(storeSlug ? `/store/${encodeURIComponent(String(storeSlug))}` : `/shop/${product.shop.id}`);
               }}
               sx={{
                 fontSize: 12,

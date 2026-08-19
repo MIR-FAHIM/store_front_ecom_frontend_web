@@ -35,6 +35,7 @@ function CategoryWiseProductPhnView({
   pagination,
   page,
   handlePageChange,
+  storeSlug = "",
 }) {
   const border = theme.palette.divider || colors.primary[200];
   const panelBg = colors.primary[400];
@@ -227,7 +228,7 @@ function CategoryWiseProductPhnView({
             <Typography variant="h6" sx={{ mb: 1.5 }}>
               {error || "No products found."}
             </Typography>
-            <Button variant="contained" onClick={() => navigate("/")} sx={{ textTransform: "none", fontWeight: 700 }}>
+            <Button variant="contained" onClick={() => navigate(storeSlug ? `/store/${encodeURIComponent(String(storeSlug))}` : "/")} sx={{ textTransform: "none", fontWeight: 700 }}>
               Back to home
             </Button>
           </Box>
@@ -236,7 +237,7 @@ function CategoryWiseProductPhnView({
             <Grid container spacing={1.5}>
               {products.map((product, index) => (
                 <Grid key={product?.id ?? product?.product_id ?? index} item xs={6}>
-                  <SmartProductCard product={product} onView={(p) => navigate(productDetailPath(p))} />
+                  <SmartProductCard product={product} storeSlug={storeSlug} onView={(p) => navigate(productDetailPath(p, storeSlug))} />
                 </Grid>
               ))}
             </Grid>

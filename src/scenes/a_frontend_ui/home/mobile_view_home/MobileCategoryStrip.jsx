@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { image_file_url } from "../../../../api/config";
+import { categoriesPath, categoryPath } from "../../../../utils/productRoute";
 
 const resolveCategoryImage = (cat) => {
   if (cat?.banner?.url) return cat.banner.url;
@@ -22,14 +23,14 @@ const GRADIENTS = [
   "linear-gradient(135deg,#fd7043,#ffb300)",
 ];
 
-function CategoryBubble({ cat, index }) {
+function CategoryBubble({ cat, index, storeSlug = "" }) {
   const navigate = useNavigate();
   const img = useMemo(() => resolveCategoryImage(cat), [cat]);
   const gradient = GRADIENTS[index % GRADIENTS.length];
 
   return (
     <Box
-      onClick={() => navigate(`/category/${cat.id}`)}
+      onClick={() => navigate(categoryPath(cat.id, storeSlug))}
       sx={{
         display: "flex",
         flexDirection: "column",
@@ -72,7 +73,7 @@ function CategoryBubble({ cat, index }) {
   );
 }
 
-export default function MobileCategoryStrip({ categories = [] }) {
+export default function MobileCategoryStrip({ categories = [], storeSlug = "" }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const items = useMemo(() => categories.slice(0, 12), [categories]);
@@ -90,7 +91,7 @@ export default function MobileCategoryStrip({ categories = [] }) {
           variant="caption"
           fontWeight={700}
           sx={{ color: "primary.main", cursor: "pointer" }}
-          onClick={() => navigate("/categories")}
+          onClick={() => navigate(categoriesPath(storeSlug))}
         >
           See all
         </Typography>
@@ -109,7 +110,7 @@ export default function MobileCategoryStrip({ categories = [] }) {
         }}
       >
         {items.map((cat, i) => (
-          <CategoryBubble key={cat.id} cat={cat} index={i} />
+          <CategoryBubble key={cat.id} cat={cat} index={i} storeSlug={storeSlug} />
         ))}
       </Box>
     </Box>

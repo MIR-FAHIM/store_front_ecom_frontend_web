@@ -25,7 +25,7 @@ const safeArray = (x) => (Array.isArray(x) ? x : []);
 	return "https://placehold.co/600x400";
   };
 
-const RelatedProduct = ({ productId }) => {
+const RelatedProduct = ({ productId, storeSlug = "" }) => {
 	const theme = useTheme();
 	const navigate = useNavigate();
 
@@ -84,7 +84,7 @@ const RelatedProduct = ({ productId }) => {
 		const load = async () => {
 			setLoading(true);
 			try {
-				const res = await getSellerFeaturedByProduct(productId);
+				const res = await getSellerFeaturedByProduct(productId, storeSlug ? { store_slug: storeSlug } : {});
 				// API returns { status, message, data: [products] }
 				const products = safeArray(res?.data);
 				if (mounted) setItems(products);
@@ -100,7 +100,7 @@ const RelatedProduct = ({ productId }) => {
 		return () => {
 			mounted = false;
 		};
-	}, [productId]);
+	}, [productId, storeSlug]);
 
 	const money = useMemo(
 		() => (n) => new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT" }).format(Number(n || 0)),
@@ -138,7 +138,7 @@ const RelatedProduct = ({ productId }) => {
 							return (
 								<Box
 									key={p?.id}
-									onClick={() => navigate(productDetailPath(p))}
+									onClick={() => navigate(productDetailPath(p, storeSlug))}
 									sx={{
 										display: "flex",
 										gap: 1,

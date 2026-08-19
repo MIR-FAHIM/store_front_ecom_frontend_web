@@ -14,7 +14,7 @@ const resolveBanner = (banner) => {
   return "/assets/images/banner.jpg";
 };
 
-export default function MobilePromoBanner({ bannerIndex = 1 }) {
+export default function MobilePromoBanner({ bannerIndex = 1, storeParams = {} }) {
   const navigate = useNavigate();
   const [banner, setBanner] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ export default function MobilePromoBanner({ bannerIndex = 1 }) {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await getBanner();
+        const res = await getBanner(storeParams);
         const list = Array.isArray(res) ? res : res?.data || res?.data?.data || [];
         if (mounted) setBanner(list[bannerIndex] || list[0] || null);
       } catch (e) {
@@ -35,7 +35,7 @@ export default function MobilePromoBanner({ bannerIndex = 1 }) {
     };
     load();
     return () => { mounted = false; };
-  }, [bannerIndex]);
+  }, [bannerIndex, storeParams]);
 
   const bg = useMemo(() => (banner ? resolveBanner(banner) : "/assets/images/banner.jpg"), [banner]);
 

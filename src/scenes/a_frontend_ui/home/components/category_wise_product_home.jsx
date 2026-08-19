@@ -6,6 +6,7 @@ import { getProduct } from "../../../../api/controller/admin_controller/product/
 import { getCategoryInfo } from "../../../../api/controller/admin_controller/category/category_controller";
 import FeaturedTitle from "./FeaturedTitle";
 import SquareProductCard from "../../product/components/SquareProductCard";
+import { categoryPath } from "../../../../utils/productRoute";
 
 const safeArray = (x) => (Array.isArray(x) ? x : []);
 
@@ -15,6 +16,7 @@ export default function CategoryWiseProductHome({
 	categoryId = "",
 	color = "#cfe1b8",
 	title = "",
+	storeParams = {},
 }) {
 	const theme = useTheme();
 	const navigate = useNavigate();
@@ -23,6 +25,7 @@ export default function CategoryWiseProductHome({
 	const upMd = useMediaQuery(theme.breakpoints.up("md"));
 	const upSm = useMediaQuery(theme.breakpoints.up("sm"));
 	const resolvedCategoryId = category_id || categoryId || "";
+	const storeSlug = storeParams?.store_slug || "";
 
 	const [loading, setLoading] = useState(false);
 	const [items, setItems] = useState([]);
@@ -49,7 +52,7 @@ export default function CategoryWiseProductHome({
 
 			setLoading(true);
 			try {
-				const res = await getProduct({ page: 1, per_page: 12, category_id: resolvedCategoryId });
+				const res = await getProduct({ page: 1, per_page: 12, category_id: resolvedCategoryId, ...storeParams });
 				const payload = res?.data ?? res ?? {};
 				const list = payload?.data ?? payload ?? [];
 				if (mounted) setItems(safeArray(list));
@@ -66,7 +69,7 @@ export default function CategoryWiseProductHome({
 		return () => {
 			mounted = false;
 		};
-	}, [resolvedCategoryId]);
+	}, [resolvedCategoryId, storeParams]);
 
 	useEffect(() => {
 		let mounted = true;
@@ -115,7 +118,7 @@ export default function CategoryWiseProductHome({
 			<Box sx={{ display: "grid", gap: 0.5, gridTemplateColumns: `repeat(${perView}, minmax(0, 1fr))` }}>
 				{slice.map((product) => (
 					<Box key={product.id} sx={{ minWidth: 0, display: "flex", justifyContent: "center" }}>
-						<SquareProductCard product={product} onView={() => onView?.(product)} size={150} />
+						<SquareProductCard product={product} onView={() => onView?.(product)} size={150} storeSlug={storeSlug} />
 					</Box>
 				))}
 			</Box>
@@ -131,7 +134,7 @@ export default function CategoryWiseProductHome({
 	};
 
 	const handleSeeAll = () => {
-		navigate("/category/" + resolvedCategoryId);
+		navigate(categoryPath(resolvedCategoryId, storeSlug));
 	};
 
 	const displayTitle = title || (categoryName ? `${categoryName} Products` : "Featured Products");

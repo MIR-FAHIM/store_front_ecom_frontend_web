@@ -8,7 +8,7 @@ import SquareProductCard from "../../../a_frontend_ui/product/components/SquareP
 
 const safeArray = (x) => (Array.isArray(x) ? x : []);
 
-export default function FeaturedProduct({ onView }) {
+export default function FeaturedProduct({ onView, storeParams = {} }) {
 	const theme = useTheme();
 	const navigate = useNavigate();
 	const upXl = useMediaQuery(theme.breakpoints.up("xl"));
@@ -35,7 +35,7 @@ export default function FeaturedProduct({ onView }) {
 		const load = async () => {
 			setLoading(true);
 			try {
-				const res = await getFeaturedProduct({ page: 1, per_page: 12 });
+				const res = await getFeaturedProduct({ page: 1, per_page: 12, ...storeParams });
 				const list = res?.data?.data ?? res?.data ?? res ?? [];
 				if (mounted) setItems(safeArray(list));
 			} catch (e) {
@@ -50,7 +50,7 @@ export default function FeaturedProduct({ onView }) {
 		return () => {
 			mounted = false;
 		};
-	}, []);
+	}, [storeParams]);
 
 	const content = useMemo(() => {
 		if (loading) {

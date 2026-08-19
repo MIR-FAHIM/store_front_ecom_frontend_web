@@ -23,11 +23,12 @@ export const getRelatedProducts = async (id) => {
     return [];
   }
 }
-export const getSellerFeaturedByProduct = async (id) => {
+export const getSellerFeaturedByProduct = async (id, params = {}) => {
   try {
-    const response = await axiosInstance.get(`/api/products/seller-featured-by-product?product_id=${id}`,
-       
-    );
+    const response = await axiosInstance.get(`/api/products/seller-featured-by-product`, {
+      params: { product_id: id, ...params },
+      skipAuth: Boolean(params?.store_slug || params?.store_id),
+    });
     return response.data;
   } catch (error) {
     console.error("Error fetching getSellerFeaturedByProduct:", error);

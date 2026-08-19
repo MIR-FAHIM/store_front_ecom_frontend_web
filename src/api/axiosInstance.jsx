@@ -9,6 +9,11 @@ const axiosInstance = axios.create({
 
 
 axiosInstance.interceptors.request.use((config) => {
+  if (config.skipAuth) {
+    delete config.headers.Authorization;
+    return config;
+  }
+
   const token =
     localStorage.getItem("authToken") ||
     sessionStorage.getItem("authToken");

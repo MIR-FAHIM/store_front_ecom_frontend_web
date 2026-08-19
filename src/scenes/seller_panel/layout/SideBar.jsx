@@ -24,11 +24,20 @@ import {
   ReceiptLongOutlined,
   LogoutOutlined,
   WorkspacePremiumOutlined,
+  ImageOutlined,
+  CategoryOutlined,
 } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getUserDetail } from "../../../api/controller/admin_controller/user_controller";
 
 const drawerWidth = 260;
+const sidebarBg = "#07145f";
+const sidebarBorder = "rgba(255,255,255,0.12)";
+const sidebarText = "#eef2ff";
+const sidebarMuted = "#a7b4e8";
+const sidebarActiveBg = "rgba(255,255,255,0.14)";
+const sidebarHoverBg = "rgba(255,255,255,0.09)";
+const sidebarAccent = "#facc15";
 
 const navGroups = [
   {
@@ -43,6 +52,8 @@ const navGroups = [
     items: [
       { label: "POS", icon: <PointOfSaleOutlined />, path: "/seller/pos" },
       { label: "Shops", icon: <StorefrontOutlined />, path: "/seller/shops" },
+      { label: "Banners", icon: <ImageOutlined />, path: "/seller/banners" },
+      { label: "Categories", icon: <CategoryOutlined />, path: "/seller/categories" },
       { label: "Orders", icon: <ShoppingCartOutlined />, path: "/seller/orders" },
       { label: "Packages", icon: <WorkspacePremiumOutlined />, path: "/seller/packages" },
     ],
@@ -58,7 +69,6 @@ const navGroups = [
 
 const SideBar = ({ mobileOpen = false, onMobileClose }) => {
   const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
   const location = useLocation();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const navigate = useNavigate();
@@ -104,13 +114,13 @@ const SideBar = ({ mobileOpen = false, onMobileClose }) => {
           mb: 0.4,
           py: 0.8,
           px: 1.5,
-          color: active ? "#6366f1" : (isDark ? "#94a3b8" : "#64748b"),
-          bgcolor: active ? (isDark ? "rgba(99,102,241,0.12)" : "#eef2ff") : "transparent",
-          "&:hover": { bgcolor: isDark ? "rgba(99,102,241,0.08)" : "#f1f5f9" },
+          color: active ? "#fff" : sidebarMuted,
+          bgcolor: active ? sidebarActiveBg : "transparent",
+          "&:hover": { bgcolor: sidebarHoverBg, color: "#fff" },
           transition: "all .15s ease",
         }}
       >
-        <ListItemIcon sx={{ minWidth: 34, color: active ? "#6366f1" : (isDark ? "#64748b" : "#94a3b8") }}>
+        <ListItemIcon sx={{ minWidth: 34, color: active ? sidebarAccent : sidebarMuted }}>
           {React.cloneElement(item.icon, { sx: { fontSize: 20 } })}
         </ListItemIcon>
         <ListItemText
@@ -118,7 +128,7 @@ const SideBar = ({ mobileOpen = false, onMobileClose }) => {
           primaryTypographyProps={{ fontWeight: active ? 700 : 500, fontSize: 13, letterSpacing: 0.1 }}
         />
         {active && (
-          <Box sx={{ width: 4, height: 20, borderRadius: 4, bgcolor: "#6366f1", ml: 0.5 }} />
+          <Box sx={{ width: 4, height: 20, borderRadius: 4, bgcolor: sidebarAccent, ml: 0.5 }} />
         )}
       </ListItemButton>
     );
@@ -128,9 +138,9 @@ const SideBar = ({ mobileOpen = false, onMobileClose }) => {
     <Box
       sx={{
         height: "100%",
-        bgcolor: isDark ? "#161822" : "#fff",
+        bgcolor: sidebarBg,
         borderRight: "1px solid",
-        borderColor: "divider",
+        borderColor: sidebarBorder,
         px: 2,
         py: 2.5,
         display: "flex",
@@ -140,14 +150,14 @@ const SideBar = ({ mobileOpen = false, onMobileClose }) => {
       {/* Profile section */}
       <Box sx={{ mb: 3 }}>
         <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
-          <Avatar sx={{ width: 40, height: 40, bgcolor: "#6366f1", fontWeight: 800, fontSize: 16 }}>
+          <Avatar sx={{ width: 40, height: 40, bgcolor: sidebarAccent, color: sidebarBg, fontWeight: 800, fontSize: 16 }}>
             {userName.charAt(0).toUpperCase()}
           </Avatar>
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="body2" sx={{ fontWeight: 800, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <Typography variant="body2" sx={{ color: sidebarText, fontWeight: 800, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {userName}
             </Typography>
-            <Typography variant="caption" sx={{ color: "text.disabled", fontSize: 11 }}>
+            <Typography variant="caption" sx={{ color: sidebarMuted, fontSize: 11 }}>
               Seller Account
             </Typography>
           </Box>
@@ -161,7 +171,7 @@ const SideBar = ({ mobileOpen = false, onMobileClose }) => {
             <Box key={group.title} sx={{ mb: 2.5 }}>
               <Typography
                 variant="overline"
-                sx={{ color: "text.disabled", fontWeight: 800, fontSize: 10, letterSpacing: 1.2, pl: 1.5 }}
+                sx={{ color: "rgba(255,255,255,0.48)", fontWeight: 800, fontSize: 10, letterSpacing: 1.2, pl: 1.5 }}
               >
                 {group.title}
               </Typography>
@@ -174,14 +184,14 @@ const SideBar = ({ mobileOpen = false, onMobileClose }) => {
       </Box>
 
       {/* Store status + logout */}
-      <Box sx={{ pt: 2, borderTop: "1px solid", borderColor: "divider" }}>
-        <Box sx={{ p: 1.5, borderRadius: 2.5, bgcolor: isDark ? "rgba(16,185,129,0.08)" : "#ecfdf5", mb: 1.5 }}>
+      <Box sx={{ pt: 2, borderTop: "1px solid", borderColor: sidebarBorder }}>
+        <Box sx={{ p: 1.5, borderRadius: 2.5, bgcolor: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.22)", mb: 1.5 }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Box>
-              <Typography variant="caption" sx={{ fontWeight: 700, color: "#10b981", fontSize: 11 }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: "#86efac", fontSize: 11 }}>
                 Store Online
               </Typography>
-              <Typography variant="caption" sx={{ display: "block", color: "text.disabled", fontSize: 10 }}>
+              <Typography variant="caption" sx={{ display: "block", color: sidebarMuted, fontSize: 10 }}>
                 Accepting orders
               </Typography>
             </Box>
@@ -201,7 +211,7 @@ const SideBar = ({ mobileOpen = false, onMobileClose }) => {
             color: "#ef4444",
             justifyContent: "flex-start",
             px: 1.5,
-            "&:hover": { bgcolor: isDark ? "rgba(239,68,68,0.08)" : "#fef2f2" },
+            "&:hover": { bgcolor: "rgba(239,68,68,0.12)" },
           }}
         >
           Sign Out

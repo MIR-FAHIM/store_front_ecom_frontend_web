@@ -11,11 +11,14 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import FolderIcon from "@mui/icons-material/Folder";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useTheme } from "@mui/material";
 import { tokens } from "../../../theme";
 import { image_file_url } from "../../../api/config/index.jsx";
 import { getCategoryWithAllChildren } from "../../../api/controller/admin_controller/category/category_controller";
+import { fetchPublicStoreCategories } from "../../../api/controller/admin_controller/category/store_category_controller";
+import { normalizeCategoryList } from "../../../utils/categoryTree";
+import { categoryPath } from "../../../utils/productRoute";
 
 const safeArray = (value) => (Array.isArray(value) ? value : []);
 
@@ -38,6 +41,14 @@ const buildImageUrl = (media) => {
   return `${base}/${path}`;
 };
 
+const hasImageValue = (media) => {
+  if (!media) return false;
+  if (typeof media === "object") {
+    return Boolean(media.url || media.external_link || media.file_name || media.file_original_name);
+  }
+  return !/^\d+$/.test(String(media).trim());
+};
+
 const countAllDescendants = (children = []) => {
   let total = 0;
   for (const child of children) {
@@ -52,7 +63,7 @@ const SHOW_LIMIT = 5;
 /**
  * A single subcategory column: bold heading + list of leaf children
  */
-const SubCategoryColumn = ({ category, navigate, colors }) => {
+const SubCategoryColumn = ({ category, navigate, colors, storeSlug = "" }) => {
   const leaves = safeArray(category?.children);
   const [showAll, setShowAll] = useState(false);
   const visible = showAll ? leaves : leaves.slice(0, SHOW_LIMIT);
@@ -62,7 +73,7 @@ const SubCategoryColumn = ({ category, navigate, colors }) => {
       {/* Subcategory heading */}
       <Typography
         variant="body2"
-        onClick={() => category?.id && navigate(`/category/${category.id}`)}
+        onClick={() => category?.id && navigate(categoryPath(category.id, storeSlug))}
         sx={{
           fontWeight: 700,
           fontSize: "0.8rem",
@@ -82,7 +93,7 @@ const SubCategoryColumn = ({ category, navigate, colors }) => {
           <Typography
             key={leaf.id ?? leaf.name}
             variant="caption"
-            onClick={() => leaf?.id && navigate(`/category/${leaf.id}`)}
+            onClick={() => leaf?.id && navigate(categoryPath(leaf.id, storeSlug))}
             sx={{
               fontSize: "0.74rem",
               color: colors.gray[400],
@@ -122,11 +133,11 @@ const SubCategoryColumn = ({ category, navigate, colors }) => {
 /**
  * Top-level category card with horizontal grid of subcategories
  */
-const CategoryCard = ({ category, navigate, colors }) => {
+const CategoryCard = ({ category, navigate, colors, storeSlug = "" }) => {
   const children = safeArray(category?.children);
   const totalDescendants = countAllDescendants(children);
   const banner = buildImageUrl(
-    category?.banner || category?.icon || category?.cover_image
+    [category?.banner, category?.icon, category?.cover_image].find(hasImageValue)
   );
   const [expanded, setExpanded] = useState(true);
 
@@ -202,7 +213,7 @@ const CategoryCard = ({ category, navigate, colors }) => {
             }}
             onClick={(e) => {
               e.stopPropagation();
-              category?.id && navigate(`/category/${category.id}`);
+              category?.id && navigate(categoryPath(category.id, storeSlug));
             }}
           >
             {category?.name || "Category"}
@@ -294,6 +305,7 @@ const CategoryCard = ({ category, navigate, colors }) => {
                 category={child}
                 navigate={navigate}
                 colors={colors}
+                storeSlug={storeSlug}
               />
             ))}
           </Box>
@@ -360,6 +372,8 @@ const AllCategory = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const navigate = useNavigate();
+  const { slug } = useParams();
+  const isStorefront = Boolean(slug);
 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -371,9 +385,10 @@ const AllCategory = () => {
       setLoading(true);
       setError("");
       try {
-        const res = await getCategoryWithAllChildren();
-        const payload = res?.data ?? res;
-        const list = safeArray(payload?.data ?? payload);
+        const res = isStorefront
+          ? await fetchPublicStoreCategories(slug)
+          : await getCategoryWithAllChildren();
+        const list = normalizeCategoryList(res);
         setCategories(list);
       } catch (e) {
         console.error("Failed to load categories", e);
@@ -384,7 +399,7 @@ const AllCategory = () => {
       }
     };
     load();
-  }, []);
+  }, [isStorefront, slug]);
 
   const filterTree = useCallback((nodes, term) => {
     if (!term) return nodes;
@@ -493,6 +508,7 @@ const AllCategory = () => {
                     category={category}
                     navigate={navigate}
                     colors={colors}
+                    storeSlug={slug}
                   />
                 ))}
               </Box>

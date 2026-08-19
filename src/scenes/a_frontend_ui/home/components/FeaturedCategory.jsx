@@ -3,15 +3,29 @@ import { Box, Button, IconButton, Typography, useMediaQuery, useTheme } from "@m
 import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { image_file_url } from "../../../../api/config";
+import { categoriesPath, categoryPath } from "../../../../utils/productRoute";
 
 const resolveCategoryImage = (cat) => {
-  if (cat?.banner?.url) return cat.banner.url;
-  if (cat?.banner?.file_name) return `${image_file_url}/${cat.banner.file_name}`;
-  if (cat?.cover_image) return `${image_file_url}/${cat.cover_image}`;
-  return "/assets/images/placeholder.png";
+  const media = cat?.banner || cat?.cover_image ||  cat?.icon;
+  if (!media) return "/assets/images/placeholder.png";
+
+  if (typeof media === "object") {
+    const direct = media.url || media.external_link;
+    if (direct && /^https?:\/\//i.test(String(direct))) return String(direct);
+
+    const fileName = media.file_name || media.file_original_name;
+    if (fileName) {
+      return `${String(image_file_url || "").replace(/\/+$/, "")}/${String(fileName).replace(/^\/+/, "")}`;
+    }
+  }
+
+  const raw = String(media);
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (/^\d+$/.test(raw.trim())) return "/assets/images/placeholder.png";
+  return `${String(image_file_url || "").replace(/\/+$/, "")}/${raw.replace(/^\/+/, "")}`;
 };
 
-export default function FeaturedCategory({ categories = [] }) {
+export default function FeaturedCategory({ categories = [], storeSlug = "" }) {
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
   const navigate = useNavigate();
@@ -68,7 +82,7 @@ export default function FeaturedCategory({ categories = [] }) {
           variant="contained"
           size="small"
           sx={{ mt: 2, borderRadius: 2, textTransform: "none", fontWeight: 700 }}
-          onClick={() => navigate("/categories")}
+          onClick={() => navigate(categoriesPath(storeSlug))}
         >
           All categories
         </Button>
@@ -93,7 +107,7 @@ export default function FeaturedCategory({ categories = [] }) {
                   gap: 1,
                   cursor: "pointer",
                 }}
-                onClick={() => navigate(`/category/${cat.id}`)}
+                onClick={() => navigate(categoryPath(cat.id, storeSlug))}
               >
                 <Box
                   sx={{
@@ -165,7 +179,7 @@ export default function FeaturedCategory({ categories = [] }) {
                     gap: 1,
                     cursor: "pointer",
                   }}
-                  onClick={() => navigate(`/category/${cat.id}`)}
+                  onClick={() => navigate(categoryPath(cat.id, storeSlug))}
                 >
                   <Box
                     sx={{

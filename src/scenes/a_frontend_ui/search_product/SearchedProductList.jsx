@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Box, Chip, CircularProgress, Pagination, Stack, Typography } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { getProduct } from "../../../api/controller/admin_controller/product/product_controller";
 import FeaturedTitle from "../home/components/FeaturedTitle";
 import SmartProductCard from "../home/components/ProductCard";
@@ -11,6 +11,7 @@ const safeArray = (x) => (Array.isArray(x) ? x : []);
 
 const SearchedProductList = () => {
     const navigate = useNavigate();
+    const { slug } = useParams();
     const [searchParams] = useSearchParams();
 
     const query = searchParams.get("q") || "";
@@ -30,6 +31,7 @@ const SearchedProductList = () => {
             const params = { page: pg, per_page: perPage, search };
             if (category) params.category_id = category;
             if (brand) params.brand_id = brand;
+            if (slug) params.store_slug = slug;
 
             const res = await getProduct(params);
             const payload = res?.data ?? res ?? {};
@@ -46,7 +48,7 @@ const SearchedProductList = () => {
         } finally {
             setLoading(false);
         }
-    }, [perPage]);
+    }, [perPage, slug]);
 
     // Load when URL params change
     useEffect(() => {
@@ -80,14 +82,14 @@ const SearchedProductList = () => {
                                 <Chip label={`Category: ${categoryId}`} size="small" onDelete={() => {
                                     const params = new URLSearchParams(searchParams);
                                     params.delete("category");
-                                    navigate(`/search?${params.toString()}`);
+                                    navigate(`${slug ? `/store/${encodeURIComponent(String(slug))}/search` : "/search"}?${params.toString()}`);
                                 }} />
                             )}
                             {brandId && (
                                 <Chip label={`Brand: ${brandId}`} size="small" onDelete={() => {
                                     const params = new URLSearchParams(searchParams);
                                     params.delete("brand");
-                                    navigate(`/search?${params.toString()}`);
+                                    navigate(`${slug ? `/store/${encodeURIComponent(String(slug))}/search` : "/search"}?${params.toString()}`);
                                 }} />
                             )}
                         </Stack>
@@ -130,7 +132,8 @@ const SearchedProductList = () => {
                                 <SmartProductCard
                                     key={product.id}
                                     product={product}
-                                    onView={() => navigate(productDetailPath(product))}
+                                    storeSlug={slug}
+                                    onView={() => navigate(productDetailPath(product, slug))}
                                 />
                             ))
                         )}

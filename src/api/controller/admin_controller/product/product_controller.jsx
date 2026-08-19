@@ -1,10 +1,13 @@
 import axiosInstance from '../../../axiosInstance.jsx'
 
+const isStoreScopedRequest = (params = {}) => Boolean(params?.store_slug || params?.store_id);
+
 // Fetch posts from API
 export const getProduct = async (params = {}) => {
   try {
     const response = await axiosInstance.get(`/api/products/list`, {
       params,
+      skipAuth: isStoreScopedRequest(params),
       headers: {
         'Authorization': `Bearer ${localStorage.getItem("authToken")}`,
       },
@@ -107,6 +110,7 @@ export const getFeaturedProduct = async (params = {}) => {
   try {
     const response = await axiosInstance.get(`/api/products/list/featured?featured=1`, {
       params,
+      skipAuth: isStoreScopedRequest(params),
       headers: {
         'Authorization': `Bearer ${localStorage.getItem("authToken")}`,
       },
@@ -124,6 +128,7 @@ export const getTodayDealProduct = async (params = {}) => {
   try {
     const response = await axiosInstance.get(`/api/products/list/today-deal?todays_deal=1`, {
       params,
+      skipAuth: isStoreScopedRequest(params),
       headers: {
         'Authorization': `Bearer ${localStorage.getItem("authToken")}`,
       },
@@ -139,17 +144,13 @@ export const getTodayDealProduct = async (params = {}) => {
 
 
 
-export const getProductDetails = async (identifier) => {
+export const getProductDetails = async (identifier, params = {}) => {
 
   try {
-    const response = await axiosInstance.get(`/api/products/details/${encodeURIComponent(identifier)}`,
-      // {
-      //   headers: {
-      //     // 'token': localStorage.getItem("authToken"), // Add the token in Authorization header
-      //     'Authorization': `Bearer ${localStorage.getItem("authToken")}`,
-      //   },
-      // }
-    );
+    const response = await axiosInstance.get(`/api/products/details/${encodeURIComponent(identifier)}`, {
+      params,
+      skipAuth: isStoreScopedRequest(params),
+    });
 
 
     return response.data;

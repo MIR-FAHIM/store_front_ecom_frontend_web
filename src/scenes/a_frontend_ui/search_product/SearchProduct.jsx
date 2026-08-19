@@ -56,6 +56,7 @@ const SearchProduct = ({
 	isMobile = false,
 	fullWidth = true,
 	maxResults = 6,
+	storeSlug = "",
 }) => {
 	const theme = useTheme();
 	const navigate = useNavigate();
@@ -82,7 +83,7 @@ const SearchProduct = ({
 		setRecentSearches(getRecentSearches());
 		setOpen(false);
 		setFocused(false);
-		navigate(`/search?q=${encodeURIComponent(q)}`);
+		navigate(`${storeSlug ? `/store/${encodeURIComponent(String(storeSlug))}/search` : "/search"}?q=${encodeURIComponent(q)}`);
 	};
 
 	const onKeyDown = (e) => {
@@ -115,7 +116,7 @@ const SearchProduct = ({
 
 		const t = setTimeout(async () => {
 			try {
-				const res = await getProduct({ search: q, page: 1, per_page: maxResults });
+				const res = await getProduct({ search: q, page: 1, per_page: maxResults, ...(storeSlug ? { store_slug: storeSlug } : {}) });
 				const list = res?.data?.data ?? res?.data ?? [];
 				if (!alive) return;
 				setResults(safeArray(list));
@@ -340,7 +341,7 @@ const SearchProduct = ({
 												setOpen(false);
 												setFocused(false);
 												saveRecentSearch(query.trim());
-												navigate(productDetailPath(product));
+												navigate(productDetailPath(product, storeSlug));
 											}}
 											sx={{
 												display: "flex",

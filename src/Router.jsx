@@ -114,6 +114,8 @@ import PosManagementSeller from "./scenes/seller_panel/pos_management/PosManagem
 import SellerOrderDetails from "./scenes/seller_panel/order/SellerOrderDetails";
 import SettledAmountHistory from "./scenes/seller_panel/accounting/settled_amount_history";
 import MerchantPackages from "./scenes/seller_panel/subscription/MerchantPackages";
+import SellerBannerManager from "./scenes/seller_panel/banner/SellerBannerManager";
+import SellerCategoryManagement from "./scenes/seller_panel/category/SellerCategoryManagement";
 
 
 
@@ -124,6 +126,7 @@ const AppRouter = () => {
       <Routes>
         <Route path="/admin-login" element={<AdminLogin />}></Route>
         <Route path="/date-invitation" element={<DateInvitation />}></Route>
+        <Route path="/" element={hasCustomerSite ? <StoreOwnerLanding /> : <Navigate to="/admin" replace />}></Route>
         <Route path="/store-owner" element={<StoreOwnerLanding />}></Route>
         <Route path="/start-selling" element={<StoreOwnerLanding />}></Route>
         {hasCustomerSite && (
@@ -142,14 +145,17 @@ const AppRouter = () => {
         {/* Public / storefront routes */}
         {hasCustomerSite && (
           <Route path="/" element={<FrontendLayout />}>
-            <Route index element={initialRoute ? <Navigate to={initialRoute} replace /> : <HomeP1 />} />
             <Route path="home" element={<HomeP1 />} />
+            <Route path="store/:slug" element={<HomeP1 />} />
 
             <Route path="featured-products" element={<FeaturedProductList />} />
+            <Route path="store/:slug/featured-products" element={<FeaturedProductList />} />
 
             <Route path="profile" element={<Profile />} />
 
             <Route path="product/:idOrSlug" element={<ProductDetail />} />
+            <Route path="store/:slug/products/:idOrSlug" element={<ProductDetail />} />
+            <Route path="store/:slug/category/:id" element={<CategoryWiseProduct />} />
             <Route path="shop/:id" element={<ShopProducts />} />
             <Route path="shops" element={<ShopList />} />
             <Route path="category/:id" element={<CategoryWiseProduct />} />
@@ -178,10 +184,14 @@ const AppRouter = () => {
             <Route path="brands" element={<Brand />} />
             <Route path="brands/:brandId/products" element={<BrandProductsPage />} />
             <Route path="categories" element={<AllCategory />} />
+            <Route path="store/:slug/categories" element={<AllCategory />} />
             <Route path="categories/home" element={<CategoryWiseProductHome />} />
             <Route path="search" element={<SearchedProductList />} />
+            <Route path="store/:slug/search" element={<SearchedProductList />} />
             <Route path="all-products" element={<AllProductsPage />} />
             <Route path="today-deals" element={<TodayDealsPage />} />
+            <Route path="store/:slug/all-products" element={<AllProductsPage />} />
+            <Route path="store/:slug/today-deals" element={<TodayDealsPage />} />
 
           </Route>
         )}
@@ -261,6 +271,9 @@ const AppRouter = () => {
             <Route path="orders" element={<OrderShop />} />
             <Route path="pos" element={<PosManagementSeller />} />
             <Route path="packages" element={<MerchantPackages />} />
+            <Route path="banners" element={<SellerBannerManager />} />
+            <Route path="categories" element={<SellerCategoryManagement />} />
+            <Route path="stores/:storeId/categories" element={<SellerCategoryManagement />} />
             <Route path="orders/:id" element={<SellerOrderDetails />} />
             <Route path="accounting/settled-amount-history" element={<SettledAmountHistory />} />
 

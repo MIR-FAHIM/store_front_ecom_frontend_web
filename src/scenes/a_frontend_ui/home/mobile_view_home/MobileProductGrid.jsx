@@ -24,14 +24,14 @@ const resolveImage = (product) => {
   return "https://via.placeholder.com/200x200?text=No+Image";
 };
 
-function MiniProductCard({ product }) {
+function MiniProductCard({ product, storeSlug = "" }) {
   const navigate = useNavigate();
   const theme = useTheme();
   const { price, displayPrice, hasSale, discountLabel } = getProductPricing(product);
 
   return (
     <Box
-      onClick={() => navigate(productDetailPath(product))}
+      onClick={() => navigate(productDetailPath(product, storeSlug))}
       sx={{
         bgcolor: theme.palette.background.paper,
         borderRadius: 2,
@@ -101,8 +101,9 @@ function MiniProductCard({ product }) {
   );
 }
 
-export default function MobileProductGrid({ title = "All Products", seeAllPath = "/all-products" }) {
+export default function MobileProductGrid({ title = "All Products", seeAllPath = "/all-products", storeParams = {} }) {
   const navigate = useNavigate();
+  const storeSlug = storeParams?.store_slug || "";
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -113,7 +114,7 @@ export default function MobileProductGrid({ title = "All Products", seeAllPath =
     if (p === 1) setLoading(true);
     else setLoadingMore(true);
     try {
-      const res = await getProduct({ page: p, per_page: 12 });
+      const res = await getProduct({ page: p, per_page: 12, ...storeParams });
       const payload = res?.data ?? res ?? {};
       const list = safeArray(payload?.data ?? payload ?? []);
       setProducts((prev) => (append ? [...prev, ...list] : list));
@@ -125,7 +126,7 @@ export default function MobileProductGrid({ title = "All Products", seeAllPath =
       setLoading(false);
       setLoadingMore(false);
     }
-  }, []);
+  }, [storeParams]);
 
   useEffect(() => {
     load(1);
@@ -172,7 +173,7 @@ export default function MobileProductGrid({ title = "All Products", seeAllPath =
             }}
           >
             {list.map((product) => (
-              <MiniProductCard key={product.id} product={product} />
+              <MiniProductCard key={product.id} product={product} storeSlug={storeSlug} />
             ))}
           </Box>
 

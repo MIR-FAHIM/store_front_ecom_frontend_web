@@ -24,14 +24,14 @@ const resolveImage = (product) => {
   return "https://via.placeholder.com/200x200?text=No+Image";
 };
 
-function FeaturedCard({ product }) {
+function FeaturedCard({ product, storeSlug = "" }) {
   const navigate = useNavigate();
   const theme = useTheme();
   const { price, displayPrice, hasSale, discountLabel } = getProductPricing(product);
 
   return (
     <Box
-      onClick={() => navigate(productDetailPath(product))}
+      onClick={() => navigate(productDetailPath(product, storeSlug))}
       sx={{
         flexShrink: 0,
         width: 120,
@@ -108,8 +108,9 @@ function FeaturedCard({ product }) {
   );
 }
 
-export default function MobileFeaturedSection() {
+export default function MobileFeaturedSection({ storeParams = {} }) {
   const navigate = useNavigate();
+  const storeSlug = storeParams?.store_slug || "";
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -118,7 +119,7 @@ export default function MobileFeaturedSection() {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await getFeaturedProduct({ page: 1, per_page: 12 });
+        const res = await getFeaturedProduct({ page: 1, per_page: 12, ...storeParams });
         const list = res?.data?.data ?? res?.data ?? res ?? [];
         if (mounted) setItems(safeArray(list));
       } catch (e) {
@@ -129,7 +130,7 @@ export default function MobileFeaturedSection() {
     };
     load();
     return () => { mounted = false; };
-  }, []);
+  }, [storeParams]);
 
   if (!loading && items.length === 0) return null;
 
@@ -147,7 +148,7 @@ export default function MobileFeaturedSection() {
           variant="caption"
           fontWeight={700}
           sx={{ color: "primary.main", cursor: "pointer" }}
-          onClick={() => navigate("/featured-products")}
+          onClick={() => navigate(storeSlug ? `/store/${encodeURIComponent(String(storeSlug))}/featured-products` : "/featured-products")}
         >
           See all
         </Typography>
@@ -170,7 +171,7 @@ export default function MobileFeaturedSection() {
           }}
         >
           {items.map((product) => (
-            <FeaturedCard key={product.id} product={product} />
+            <FeaturedCard key={product.id} product={product} storeSlug={storeSlug} />
           ))}
         </Box>
       )}

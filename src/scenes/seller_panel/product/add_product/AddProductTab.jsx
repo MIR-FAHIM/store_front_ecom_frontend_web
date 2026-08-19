@@ -17,11 +17,12 @@ import {
 import { tokens } from "../../../../theme";
 import { createProduct, uploadProductImages, addProductAttribute } from "../../../../api/controller/admin_controller/product/product_controller";
 import { getAllShops } from "../../../../api/controller/admin_controller/shop/shop_controller.jsx";
-import { getCategory, getBrand } from "../../../../api/controller/admin_controller/product/setting_controller";
-import { getCategoryChildren } from "../../../../api/controller/admin_controller/product/product_setting_controller.jsx";
+import { getBrand } from "../../../../api/controller/admin_controller/product/setting_controller";
+import { fetchSellerMarketplaceCategories } from "../../../../api/controller/admin_controller/category/store_category_controller.jsx";
+import { filterActiveCategoryTree, flattenCategoryTree, normalizeCategoryList } from "../../../../utils/categoryTree";
 
 import { PRODUCT_WIZARD_STEPS } from "../../../admin_panel/product/add_product/components/productWizard/steps";
-import StepGeneral from "../../../admin_panel/product/add_product/components/productWizard/StepGeneral";
+import StepGeneral from "./components/productWizard/StepGeneral";
 import StepDiscountSeo from "../../../admin_panel/product/add_product/components/productWizard/StepDiscountSeo";
 import StepAttributes from "../../../admin_panel/product/add_product/components/productWizard/StepAttributes";
 import StepImages from "../../../admin_panel/product/add_product/components/productWizard/StepImages";
@@ -47,6 +48,13 @@ const normalizeList = (x) => {
   }
 
   return [];
+};
+
+const resolveSellerStoreId = (shops = [], preferredId = "") => {
+  if (preferredId) return preferredId;
+  const storedId = localStorage.getItem("storeId") || localStorage.getItem("shopId");
+  if (storedId) return storedId;
+  return shops[0]?.id ? String(shops[0].id) : "";
 };
 
 function AddProductTabSeller() {
@@ -113,27 +121,44 @@ function AddProductTabSeller() {
   const [parentCategoryId, setParentCategoryId] = useState("");
   const [subCategories, setSubCategories] = useState([]);
   const [loadingSubCategories, setLoadingSubCategories] = useState(false);
+  const categoryOptions = useMemo(
+    () =>
+      flattenCategoryTree(categories)
+        .filter((category) => category?.is_active_for_store === true)
+        .map((category) => ({
+          ...category,
+          label: `${"  ".repeat(category.depth || 0)}${category.name || "Category"}`,
+        })),
+    [categories]
+  );
 
   const loadDropdowns = async () => {
     try {
-      const [cRes, bRes, vRes] = await Promise.all([
-        getCategory(),
+      const [bRes, vRes] = await Promise.all([
         getBrand(),
         getAllShops({ page: 1, per_page: 100 }),
       ]);
 
-      const cats = normalizeList(cRes);
       const brs = normalizeList(bRes);
       const vens = normalizeList(vRes);
+      const nextStoreId = resolveSellerStoreId(vens, general.shop_id || shopId);
 
-      console.debug("Dropdown raw responses:", { cRes, bRes, vRes });
-      console.debug("Dropdown normalized:", { cats, brs, vens });
+      let cats = [];
+      if (nextStoreId) {
+        const cRes = await fetchSellerMarketplaceCategories(nextStoreId);
+        cats = filterActiveCategoryTree(normalizeCategoryList(cRes));
+      }
 
       setCategories(cats);
       setBrands(brs);
       setShops(vens);
+      if (nextStoreId) {
+        localStorage.setItem("storeId", String(nextStoreId));
+        setGeneral((prev) => ({ ...prev, shop_id: prev.shop_id || nextStoreId }));
+      }
     } catch (e) {
       console.error("Error loading dropdowns:", e);
+      setCategories([]);
     }
   };
 
@@ -156,8 +181,8 @@ function AddProductTabSeller() {
 
       setLoadingSubCategories(true);
       try {
-        const res = await getCategoryChildren(parentCategoryId);
-        const list = normalizeList(res);
+        const parent = categories.find((cat) => String(cat?.id ?? cat?._id) === String(parentCategoryId));
+        const list = Array.isArray(parent?.children) ? parent.children : [];
         setSubCategories(list);
         setGeneral((prev) => {
           if (list.length === 0) return { ...prev, category_id: parentCategoryId };
@@ -173,7 +198,7 @@ function AddProductTabSeller() {
     };
 
     loadSubCategories();
-  }, [parentCategoryId]);
+  }, [parentCategoryId, categories]);
 
   const canGoBack = step > 0;
   const canGoNext = step < PRODUCT_WIZARD_STEPS.length - 1;
@@ -325,7 +350,11 @@ function AddProductTabSeller() {
       }, 2000);
     } catch (error) {
       console.error("Product creation error:", error);
-      setErrorMessage(error.response?.data?.message || error.message || "Failed to create product");
+      const backendMessage = error.response?.data?.message || error.message || "Failed to create product";
+      if (backendMessage === "This category is not active for your store.") {
+        setErrors((prev) => ({ ...prev, category_id: backendMessage }));
+      }
+      setErrorMessage(backendMessage);
     } finally {
       setLoading(false);
     }
@@ -348,6 +377,7 @@ function AddProductTabSeller() {
           onOpenDropdown={loadDropdowns}
           errors={errors}
           categories={categories}
+          categoryOptions={categoryOptions}
           brands={brands}
           shops={shops}
         />

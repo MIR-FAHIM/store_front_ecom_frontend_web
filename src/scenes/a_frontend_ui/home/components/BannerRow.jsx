@@ -14,7 +14,7 @@ const resolveBanner = (banner) => {
   return "/assets/images/banner.jpg";
 };
 
-export default function BannerRow() {
+export default function BannerRow({ storeParams = {} }) {
   const theme = useTheme();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ export default function BannerRow() {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await getBanner();
+        const res = await getBanner(storeParams);
         const list = Array.isArray(res) ? res : res?.data || res?.data?.data || [];
         if (mounted) setItems(list);
       } catch (e) {
@@ -39,7 +39,7 @@ export default function BannerRow() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [storeParams]);
 
   const banners = useMemo(() => items.slice(0, 3), [items]);
 

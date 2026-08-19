@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Box, Divider, useTheme } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { getCategory } from "../../../../api/controller/admin_controller/product/setting_controller";
+import { fetchPublicStoreCategories } from "../../../../api/controller/admin_controller/category/store_category_controller";
+import { normalizeCategoryList } from "../../../../utils/categoryTree";
 
 import MobileHero from "./MobileHero";
 import MobileCategoryStrip from "./MobileCategoryStrip";
@@ -17,7 +19,7 @@ function SectionDivider() {
   return <Divider sx={{ mx: 1.5, opacity: 0.3 }} />;
 }
 
-export default function MobileHome() {
+export default function MobileHome({ storeParams = {}, isStorefront = false }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const isDark = theme.palette.mode === "dark";
@@ -26,13 +28,13 @@ export default function MobileHome() {
 
   const loadCategories = useCallback(async () => {
     try {
-      const c = await getCategory();
-      const list = Array.isArray(c) ? c : c?.data?.data || [];
+      const c = isStorefront ? await fetchPublicStoreCategories(storeParams.store_slug) : await getCategory(storeParams);
+      const list = normalizeCategoryList(c);
       setCategories(safeArray(list));
     } catch (e) {
       setCategories([]);
     }
-  }, []);
+  }, [isStorefront, storeParams]);
 
   useEffect(() => {
     loadCategories();
@@ -50,20 +52,22 @@ export default function MobileHome() {
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
 
         {/* 1 — Hero banner carousel */}
-        <MobileHero />
+        <MobileHero storeParams={storeParams} />
 
         {/* 2 — Category bubbles */}
-        <Box
-          sx={{
-            bgcolor: theme.palette.background.paper,
-            borderRadius: 2,
-            mx: 1.5,
-            py: 1.5,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-          }}
-        >
-          <MobileCategoryStrip categories={categories} />
-        </Box>
+        {categories.length > 0 || !isStorefront ? (
+          <Box
+            sx={{
+              bgcolor: theme.palette.background.paper,
+              borderRadius: 2,
+              mx: 1.5,
+              py: 1.5,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            }}
+          >
+            <MobileCategoryStrip categories={categories} storeSlug={storeParams.store_slug} />
+          </Box>
+        ) : null}
 
         {/* 3 — Today's Deals strip */}
         <Box
@@ -75,11 +79,11 @@ export default function MobileHome() {
             boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
           }}
         >
-          <MobileDealsStrip />
+          <MobileDealsStrip storeParams={storeParams} />
         </Box>
 
         {/* 4 — Promo banner */}
-        <MobilePromoBanner bannerIndex={0} />
+        <MobilePromoBanner bannerIndex={0} storeParams={storeParams} />
 
         {/* 5 — Featured Products */}
         <Box
@@ -91,24 +95,25 @@ export default function MobileHome() {
             boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
           }}
         >
-          <MobileFeaturedSection />
+          <MobileFeaturedSection storeParams={storeParams} />
         </Box>
 
         {/* 6 — Second promo banner */}
-        <MobilePromoBanner bannerIndex={2} />
+        <MobilePromoBanner bannerIndex={2} storeParams={storeParams} />
 
-        {/* 7 — Top Shops */}
-        <Box
-          sx={{
-            bgcolor: theme.palette.background.paper,
-            borderRadius: 2,
-            mx: 1.5,
-            py: 1.5,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-          }}
-        >
-          <MobileShopStrip />
-        </Box>
+        {!isStorefront ? (
+          <Box
+            sx={{
+              bgcolor: theme.palette.background.paper,
+              borderRadius: 2,
+              mx: 1.5,
+              py: 1.5,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            }}
+          >
+            <MobileShopStrip />
+          </Box>
+        ) : null}
 
         {/* 8 — Products grid */}
         <Box
@@ -120,7 +125,11 @@ export default function MobileHome() {
             boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
           }}
         >
-          <MobileProductGrid title="All Products" seeAllPath="/all-products" />
+          <MobileProductGrid
+            title="All Products"
+            seeAllPath={storeParams.store_slug ? `/store/${encodeURIComponent(String(storeParams.store_slug))}/all-products` : "/all-products"}
+            storeParams={storeParams}
+          />
         </Box>
 
       </Box>

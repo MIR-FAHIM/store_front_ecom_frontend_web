@@ -26,8 +26,13 @@ import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import SupportAgentOutlinedIcon from "@mui/icons-material/SupportAgentOutlined";
 import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import { getSubscriptionPackages } from "../../../api/controller/admin_controller/subscription_package/subscription_package_controller";
+import commissionBanner from "../../../assets/banner/new-web-banner--1.png";
+import storeOrderBanner from "../../../assets/banner/new-web-banner--2.png";
+import deliveryBanner from "../../../assets/banner/new-web-banner--3.png";
+import brandLogoBlue from "../../../assets/logo/store_myzoo_logo_blue.png";
+import brandLogoWhite from "../../../assets/logo/store_myzoo_white.png";
 
-const imageUrl = "https://placehold.co/600x400/png";
+const templateBanners = [storeOrderBanner, deliveryBanner, commissionBanner];
 
 const features = [
   {
@@ -178,18 +183,17 @@ const StoreOwnerLanding = () => {
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ py: 1.5 }}>
             <Stack direction="row" spacing={1} alignItems="center">
               <Box
+                component="img"
+                src={brandLogoBlue}
+                alt="MyZoo Stores"
                 sx={{
-                  width: 38,
-                  height: 38,
+                  width: 92,
+                  height: 42,
                   borderRadius: 1,
-                  bgcolor: "#111827",
-                  color: "#fff",
-                  display: "grid",
-                  placeItems: "center",
+                  objectFit: "contain",
+                  display: "block",
                 }}
-              >
-                <StorefrontOutlinedIcon fontSize="small" />
-              </Box>
+              />
               <Box>
                 <Typography sx={{ fontWeight: 950, lineHeight: 1 }}>MyZoo Stores</Typography>
                 <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 700 }}>
@@ -216,65 +220,21 @@ const StoreOwnerLanding = () => {
 
       <Box
         sx={{
-          minHeight: { xs: "82vh", md: "86vh" },
+          minHeight: { xs: "78vh", md: "82vh" },
           display: "flex",
           alignItems: "center",
           position: "relative",
           overflow: "hidden",
-          backgroundImage: `linear-gradient(90deg, rgba(15,23,42,0.84) 0%, rgba(15,23,42,0.68) 45%, rgba(15,23,42,0.36) 100%), url("${imageUrl}")`,
+          backgroundColor: "#eaf4ff",
+          backgroundImage: {
+            xs: `linear-gradient(180deg, rgba(15,23,42,0.76) 0%, rgba(15,23,42,0.32) 48%, rgba(15,23,42,0.72) 100%), url("${commissionBanner}")`,
+            md: `linear-gradient(90deg, rgba(15,23,42,0.72) 0%, rgba(15,23,42,0.42) 34%, rgba(15,23,42,0.08) 70%), url("${commissionBanner}")`,
+          },
           backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundPosition: { xs: "center", md: "center" },
         }}
       >
-        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1, py: { xs: 8, md: 10 } }}>
-          <Stack spacing={3} sx={{ maxWidth: 760 }}>
-            <Chip
-              label="For local store owners"
-              sx={{ alignSelf: "flex-start", borderRadius: 1, bgcolor: "rgba(255,255,255,0.14)", color: "#fff", fontWeight: 900 }}
-            />
-            <Typography
-              variant="h1"
-              sx={{
-                color: "#fff",
-                fontSize: { xs: 40, sm: 54, md: 72 },
-                lineHeight: 0.98,
-                fontWeight: 950,
-              }}
-            >
-              Turn your store into an online business inside a marketplace.
-            </Typography>
-            <Typography sx={{ color: "rgba(255,255,255,0.82)", fontSize: { xs: 17, md: 20 }, lineHeight: 1.7, maxWidth: 650 }}>
-              Launch a public storefront, manage products, receive orders, accept payments, and give customers a simple way to buy from your store.
-            </Typography>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-              <Button
-                size="large"
-                variant="contained"
-                endIcon={<ArrowForwardIcon />}
-                onClick={() => navigate("/seller-register")}
-                sx={{ borderRadius: 1, py: 1.4, px: 2.4, textTransform: "none", fontWeight: 950, bgcolor: "#22c55e" }}
-              >
-                Start 3 Days Trial
-              </Button>
-              <Button
-                size="large"
-                variant="outlined"
-                onClick={() => navigate("/seller-login")}
-                sx={{
-                  borderRadius: 1,
-                  py: 1.4,
-                  px: 2.4,
-                  textTransform: "none",
-                  fontWeight: 900,
-                  color: "#fff",
-                  borderColor: "rgba(255,255,255,0.55)",
-                }}
-              >
-                Merchant login
-              </Button>
-            </Stack>
-          </Stack>
-        </Container>
+       
       </Box>
 
       <Container maxWidth="lg" sx={{ mt: { xs: -4, md: -5 }, position: "relative", zIndex: 2 }}>
@@ -475,7 +435,7 @@ const StoreOwnerLanding = () => {
         <Container maxWidth="lg">
           <Grid container spacing={4} alignItems="center">
             <Grid item xs={12} md={6}>
-              <Box component="img" src={imageUrl} alt="Store dashboard preview" sx={{ width: "100%", display: "block", borderRadius: 1, border: "1px solid #e2e8f0" }} />
+              <Box component="img" src={deliveryBanner} alt="Delivery support for store owners" sx={{ width: "100%", display: "block", borderRadius: 1, border: "1px solid #e2e8f0" }} />
             </Grid>
             <Grid item xs={12} md={6}>
               <Stack spacing={2}>
@@ -534,12 +494,14 @@ const StoreOwnerLanding = () => {
             text="Use a storefront layout made for mobile shoppers, product browsing, and quick buying decisions."
           />
           <Grid container spacing={2}>
-            {[1, 2, 3].map((item) => (
-              <Grid item xs={12} md={4} key={item}>
+            {templateBanners.map((banner, index) => (
+              <Grid item xs={12} md={4} key={banner}>
                 <Paper elevation={0} sx={{ borderRadius: 1, border: "1px solid #e2e8f0", overflow: "hidden" }}>
-                  <Box component="img" src={imageUrl} alt={`Store template ${item}`} sx={{ width: "100%", display: "block", aspectRatio: "3 / 2", objectFit: "cover" }} />
+                  <Box component="img" src={banner} alt={`Store growth banner ${index + 1}`} sx={{ width: "100%", display: "block", aspectRatio: "3 / 2", objectFit: "cover" }} />
                   <Box sx={{ p: 2 }}>
-                    <Typography sx={{ fontWeight: 950 }}>Storefront template {item}</Typography>
+                    <Typography sx={{ fontWeight: 950 }}>
+                      {index === 0 ? "Order from your store" : index === 1 ? "Delivery support" : "Zero commission growth"}
+                    </Typography>
                     <Typography variant="body2" sx={{ color: "#64748b", mt: 0.5 }}>
                       Product grid, category browsing, store banner, and checkout-friendly layout.
                     </Typography>
@@ -634,7 +596,10 @@ const StoreOwnerLanding = () => {
         <Container maxWidth="lg">
           <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }} justifyContent="space-between">
             <Box>
-              <Typography sx={{ fontWeight: 950, fontSize: 22 }}>MyZoo Stores</Typography>
+              <Stack direction="row" spacing={1.2} alignItems="center">
+                <Box component="img" src={brandLogoWhite} alt="MyZoo Stores" sx={{ width: 96, height: 38, objectFit: "contain", display: "block" }} />
+                <Typography sx={{ fontWeight: 950, fontSize: 22 }}>MyZoo Stores</Typography>
+              </Stack>
               <Typography sx={{ color: "rgba(255,255,255,0.68)", mt: 0.5 }}>
                 A store-first SaaS commerce platform with marketplace discovery.
               </Typography>

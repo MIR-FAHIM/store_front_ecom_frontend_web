@@ -17,9 +17,11 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import { getCategoryWiseProduct } from "../../../../api/controller/admin_controller/product/product_controller";
 import { getProductCategoryDetails, getCategoryChildren} from "../../../../api/controller/admin_controller/product/product_setting_controller";
+import { fetchPublicStoreCategories } from "../../../../api/controller/admin_controller/category/store_category_controller";
+import { findCategoryInTree, normalizeCategoryList } from "../../../../utils/categoryTree";
 import SmartProductCard from "../../home/components/ProductCard";
 import { tokens } from "../../../../theme";
-import { productDetailPath } from "../../../../utils/productRoute";
+import { productDetailPath, storeHomePath } from "../../../../utils/productRoute";
 import CategoryWiseProductPhnView from "./CategoryWiseProductPhnView";
 
 const safeArray = (x) => (Array.isArray(x) ? x : []);
@@ -27,7 +29,9 @@ const safeArray = (x) => (Array.isArray(x) ? x : []);
 const CategoryWiseProduct = () => {
 	const theme = useTheme();
 	const navigate = useNavigate();
-	const { id } = useParams();
+	const { id, slug } = useParams();
+	const isStorefront = Boolean(slug);
+	const storeParams = useMemo(() => (slug ? { store_slug: slug } : {}), [slug]);
 
 	const colors = tokens(theme.palette.mode);
 	const pageBg = theme.palette.background?.default || colors.primary[500];
@@ -57,6 +61,7 @@ const CategoryWiseProduct = () => {
 				category_id: categoryId,
 				page,
 				per_page: pagination.per_page,
+				...storeParams,
 			});
 			const pageData = res?.data ?? res ?? {};
 			const list = safeArray(pageData?.data ?? pageData?.items ?? pageData);
@@ -78,7 +83,7 @@ const CategoryWiseProduct = () => {
 		} finally {
 			setLoading(false);
 		}
-	}, [id, selectedSubId, page, pagination.per_page]);
+	}, [id, selectedSubId, page, pagination.per_page, storeParams]);
 
 	useEffect(() => {
 		loadProducts();
@@ -88,6 +93,13 @@ const CategoryWiseProduct = () => {
 		const loadCategory = async () => {
 			if (!id) return;
 			try {
+				if (isStorefront) {
+					const res = await fetchPublicStoreCategories(slug);
+					const tree = normalizeCategoryList(res);
+					setCategory(findCategoryInTree(tree, id));
+					return;
+				}
+
 				const res = await getProductCategoryDetails(id);
 				setCategory(res?.data ?? null);
 			} catch (e) {
@@ -99,6 +111,22 @@ const CategoryWiseProduct = () => {
 		const loadChildren = async () => {
 			if (!id) return;
 			try {
+				if (isStorefront) {
+					const res = await fetchPublicStoreCategories(slug);
+					const tree = normalizeCategoryList(res);
+					const currentCategory = findCategoryInTree(tree, id);
+					const list = safeArray(currentCategory?.children);
+					setChildren(list);
+					setChildrenByParent(
+						Object.fromEntries(
+							list
+								.map((child) => [child?.id, safeArray(child?.children)])
+								.filter(([key]) => key)
+						)
+					);
+					return;
+				}
+
 				const res = await getCategoryChildren(id);
 				const list = safeArray(res?.data);
 				setChildren(list);
@@ -129,7 +157,7 @@ const CategoryWiseProduct = () => {
 		setChildrenByParent({});
 		loadCategory();
 		loadChildren();
-	}, [id]);
+	}, [id, isStorefront, slug]);
 
 	const handleSelectSubCategory = (value) => {
 		setSelectedSubId(value);
@@ -328,7 +356,7 @@ const CategoryWiseProduct = () => {
 								</Typography>
 								<Button
 									variant="contained"
-									onClick={() => navigate("/")}
+									onClick={() => navigate(storeHomePath(slug))}
 									sx={{ textTransform: "none", fontWeight: 600 }}
 								>
 									Back to home
@@ -342,7 +370,8 @@ const CategoryWiseProduct = () => {
 										item xs={12} sm={6} md={2} lg={3}>
 											<SmartProductCard
 												product={product}
-												onView={(p) => navigate(productDetailPath(p))}
+												storeSlug={slug}
+												onView={(p) => navigate(productDetailPath(p, slug))}
 											/>
 										</Grid>
 									))}
