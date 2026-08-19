@@ -283,7 +283,7 @@ const StoreOwnerLanding = () => {
             ["10 min", "Store setup"],
             ["24/7", "Storefront access"],
             ["COD + Online", "Payment flow"],
-            ["Pickup + Delivery", "Fulfillment"],
+            ["Your Store, Your order and profit", "Fulfillment"],
           ].map(([value, label]) => (
             <Grid item xs={6} md={3} key={label}>
               <Paper elevation={0} sx={{ p: 2.2, borderRadius: 1, border: "1px solid #e2e8f0" }}>

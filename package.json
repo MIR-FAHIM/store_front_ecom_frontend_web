@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:myzoo": "vite --mode myzoo",
     "dev:pharmavan": "vite --mode pharmavan",
     "build": "vite build",
+    "build:myzoo": "vite build --mode myzoo",
     "build:pharmavan": "vite build --mode pharmavan",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
+    "preview:myzoo": "vite preview --mode myzoo",
     "preview:pharmavan": "vite preview --mode pharmavan"
   },
   "dependencies": {

@@ -12,6 +12,7 @@ export const image_file_url =
 export const appname = env.VITE_APP_NAME || "MyZoo";
 export const siteName = env.VITE_SITE_NAME || appname;
 export const appLogo = env.VITE_APP_LOGO_URL || "";
+export const initialRoute = env.VITE_INITIAL_ROUTE || "";
 export const companyID = env.VITE_COMPANY_ID || "3";
 export const google_map_key =
   env.VITE_GOOGLE_MAP_KEY || "AIzaSyBgU4tHGpYmeb5KYEB9Ml4qoz1w-JJmKb8";
@@ -25,6 +26,7 @@ export const projectConfig = {
   appName: appname,
   siteName,
   appLogo,
+  initialRoute,
   baseUrl: base_url,
   imageFileUrl: image_file_url,
   companyId: companyID,

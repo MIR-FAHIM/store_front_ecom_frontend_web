@@ -12,7 +12,7 @@ function ScrollToTop() {
 }
 import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-dom";
 import App from "./App";
-import { hasCustomerSite, hasSellerPanel } from "./api/config";
+import { hasCustomerSite, hasSellerPanel, initialRoute } from "./api/config";
 import Dashboard from "./scenes/admin_panel/dashboard";
 import AdminProfile from "./scenes/admin_panel/profile";
 import Login from "./scenes/auth/login";
@@ -142,7 +142,7 @@ const AppRouter = () => {
         {/* Public / storefront routes */}
         {hasCustomerSite && (
           <Route path="/" element={<FrontendLayout />}>
-            <Route index element={<HomeP1 />} />
+            <Route index element={initialRoute ? <Navigate to={initialRoute} replace /> : <HomeP1 />} />
             <Route path="home" element={<HomeP1 />} />
 
             <Route path="featured-products" element={<FeaturedProductList />} />
