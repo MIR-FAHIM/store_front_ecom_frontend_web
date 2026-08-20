@@ -16,7 +16,7 @@ import {
   Stack,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { loginController, registerSeller } from "../../api/controller/admin_controller/user_controller.jsx";
+import { checkReferralCode, loginController, registerSeller } from "../../api/controller/admin_controller/user_controller.jsx";
 import brandLogo from "../../assets/logo/store_myzoo_white.png";
 
 const navy = "#070078";
@@ -26,6 +26,7 @@ const initialForm = {
   shop_name: "",
   email: "",
   password: "",
+  referral_code: "",
   user_type: "seller",
   phone: "",
   country: "",
@@ -63,6 +64,9 @@ const SellerRegister = () => {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [success, setSuccess] = useState("");
+  const [referralChecking, setReferralChecking] = useState(false);
+  const [referralStatus, setReferralStatus] = useState(null);
+  const [referralMessage, setReferralMessage] = useState("");
   const [showSuccessPage, setShowSuccessPage] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
@@ -70,6 +74,43 @@ const SellerRegister = () => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+    if (name === "referral_code") {
+      setReferralStatus(null);
+      setReferralMessage("");
+    }
+  };
+
+  const handleCheckReferral = async () => {
+    const code = form.referral_code.trim();
+    if (!code || referralChecking) return;
+
+    setReferralChecking(true);
+    setReferralStatus(null);
+    setReferralMessage("");
+    setError("");
+
+    try {
+      const res = await checkReferralCode(code);
+      const result = res?.data;
+      if (result?.valid === true) {
+        setReferralStatus("valid");
+        setReferralMessage(`Referral code applied from ${result?.referrer?.name || "a referrer"}`);
+      } else {
+        setReferralStatus("invalid");
+        setReferralMessage("Invalid referral code");
+      }
+    } catch (err) {
+      const backendErrors = parseBackendValidationErrors(err);
+      setReferralStatus("invalid");
+      setReferralMessage(
+        firstFieldError(backendErrors) ||
+          err?.response?.data?.message ||
+          err?.message ||
+          "Unable to check referral code."
+      );
+    } finally {
+      setReferralChecking(false);
+    }
   };
 
   const validateForm = () => {
@@ -163,6 +204,16 @@ const SellerRegister = () => {
       return;
     }
 
+    if (form.referral_code.trim() && referralStatus !== "valid") {
+      setReferralStatus("invalid");
+      setReferralMessage(
+        referralStatus === "invalid"
+          ? "Invalid referral code"
+          : "Please check the referral code before registering."
+      );
+      return;
+    }
+
     setLoading(true);
     setFieldErrors({});
 
@@ -171,6 +222,7 @@ const SellerRegister = () => {
         name: form.name,
         email: form.email,
         password: form.password,
+        referral_code: form.referral_code.trim(),
         user_type: "seller",
         phone: form.phone,
         address: form.address,
@@ -308,17 +360,28 @@ const SellerRegister = () => {
             <Typography variant="h5" sx={{ fontWeight: 900, lineHeight: 1.05 }}>
               Become a Seller
             </Typography>
-            <Typography sx={{ fontSize: { xs: 14, md: 16 }, lineHeight: 1.25 }}>
-              Create your seller account to start selling
+            <Typography sx={{ mt: 1, fontSize: { xs: 14, md: 16 }, lineHeight: 1.4, color: "rgba(255,255,255,0.84)" }}>
+              Create your account, set up your store, and start building your customer base.
             </Typography>
           </Box>
 
           <Box component="form" onSubmit={handleSubmit} autoComplete="off" sx={{ px: { xs: 2.5, md: 4 }, py: { xs: 2.5, md: 3.5 } }}>
             <Stack spacing={2.2}>
-              <Typography sx={{ color: navy, fontWeight: 800 }}>Personal Information</Typography>
+              <Box>
+                <Typography sx={{ color: navy, fontWeight: 900, fontSize: 20 }}>
+                  Let&apos;s set up your seller account
+                </Typography>
+                <Typography sx={{ mt: 0.5, color: "#64748b", fontSize: 13, lineHeight: 1.5 }}>
+                  Use an email you can access. You&apos;ll use this account to manage products, orders, and your store profile.
+                </Typography>
+              </Box>
 
               {error ? <Alert severity="error">{error}</Alert> : null}
               {success ? <Alert severity="success">{success}</Alert> : null}
+
+              <Typography sx={{ color: navy, fontWeight: 900, fontSize: 14, pt: 0.5 }}>
+                Account details
+              </Typography>
 
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
@@ -326,6 +389,7 @@ const SellerRegister = () => {
                     name="name"
                     value={form.name}
                     onChange={handleChange}
+                    label="Seller name"
                     placeholder="Seller Name"
                     fullWidth
                     required
@@ -340,6 +404,7 @@ const SellerRegister = () => {
                     name="shop_name"
                     value={form.shop_name}
                     onChange={handleChange}
+                    label="Store name"
                     placeholder="Store Name"
                     fullWidth
                     required
@@ -357,6 +422,7 @@ const SellerRegister = () => {
                     name="email"
                     value={form.email}
                     onChange={handleChange}
+                    label="Email address"
                     placeholder="Email"
                     fullWidth
                     required
@@ -372,6 +438,7 @@ const SellerRegister = () => {
                     name="phone"
                     value={form.phone}
                     onChange={handleChange}
+                    label="Phone number"
                     placeholder="Phone"
                     fullWidth
                     type="tel"
@@ -383,12 +450,17 @@ const SellerRegister = () => {
                 </Grid>
               </Grid>
 
+              <Typography sx={{ color: navy, fontWeight: 900, fontSize: 14, pt: 0.5 }}>
+                Store location
+              </Typography>
+
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <TextField
                     name="country"
                     value={form.country}
                     onChange={handleChange}
+                    label="Country"
                     placeholder="Country"
                     fullWidth
                     error={Boolean(getFieldError("country"))}
@@ -401,6 +473,7 @@ const SellerRegister = () => {
                     name="state"
                     value={form.state}
                     onChange={handleChange}
+                    label="Division / state"
                     placeholder="Division"
                     fullWidth
                     error={Boolean(getFieldError("state"))}
@@ -413,6 +486,7 @@ const SellerRegister = () => {
                     name="city"
                     value={form.city}
                     onChange={handleChange}
+                    label="City"
                     placeholder="City"
                     fullWidth
                     error={Boolean(getFieldError("city"))}
@@ -425,6 +499,7 @@ const SellerRegister = () => {
                     name="postal_code"
                     value={form.postal_code}
                     onChange={handleChange}
+                    label="Postal code"
                     placeholder="Postal code"
                     fullWidth
                     error={Boolean(getFieldError("postal_code"))}
@@ -438,6 +513,7 @@ const SellerRegister = () => {
                 name="address"
                 value={form.address}
                 onChange={handleChange}
+                label="Business address"
                 placeholder="Address"
                 fullWidth
                 error={Boolean(getFieldError("address"))}
@@ -448,14 +524,55 @@ const SellerRegister = () => {
                 name="password"
                 value={form.password}
                 onChange={handleChange}
+                label="Password"
                 placeholder="Password"
                 type="password"
                 fullWidth
                 required
                 error={Boolean(getFieldError("password"))}
-                helperText={getFieldError("password")}
+                helperText={getFieldError("password") || "Use at least 6 characters."}
                 sx={fieldSx}
               />
+
+              <Box>
+                <Typography sx={{ color: navy, fontWeight: 900, fontSize: 14, mb: 0.35 }}>
+                  Referral (optional)
+                </Typography>
+                <Typography sx={{ color: "#64748b", fontSize: 12, mb: 1 }}>
+                  Have a referral code? Check it here to link your seller account to its referrer.
+                </Typography>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ xs: "stretch", sm: "flex-start" }}>
+                <TextField
+                  name="referral_code"
+                  value={form.referral_code}
+                  onChange={handleChange}
+                  label="Referral Code"
+                  placeholder="Enter referral code"
+                  fullWidth
+                  error={Boolean(getFieldError("referral_code")) || referralStatus === "invalid"}
+                  helperText={getFieldError("referral_code") || referralMessage || "Optional"}
+                  sx={fieldSx}
+                  inputProps={{ "aria-label": "Referral Code" }}
+                />
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={handleCheckReferral}
+                  disabled={referralChecking || !form.referral_code.trim()}
+                  sx={{
+                    minWidth: { xs: "100%", sm: 96 },
+                    minHeight: 52,
+                    borderColor: navy,
+                    color: navy,
+                    borderRadius: 1,
+                    fontWeight: 800,
+                    textTransform: "none",
+                  }}
+                >
+                  {referralChecking ? <CircularProgress size={20} sx={{ color: navy }} /> : "Check"}
+                </Button>
+              </Stack>
+              </Box>
 
               <FormControlLabel
                 sx={{ m: 0, alignItems: "flex-start", "& .MuiFormControlLabel-label": { pt: 0.7 } }}
@@ -483,7 +600,7 @@ const SellerRegister = () => {
               <Button
                 type="submit"
                 variant="contained"
-                disabled={loading}
+                disabled={loading || referralChecking || !agreedToTerms}
                 sx={{
                   alignSelf: "center",
                   minWidth: { xs: "100%", sm: 210 },
@@ -499,6 +616,12 @@ const SellerRegister = () => {
               >
                 {loading ? <CircularProgress size={22} sx={{ color: "#fff" }} /> : "Create Seller Account"}
               </Button>
+              <Typography sx={{ textAlign: "center", color: "#64748b", fontSize: 12, lineHeight: 1.5 }}>
+                Already have a seller account?{" "}
+                <Link href="/seller-login" underline="hover" sx={{ color: navy, fontWeight: 900 }}>
+                  Sign in
+                </Link>
+              </Typography>
             </Stack>
           </Box>
         </Card>

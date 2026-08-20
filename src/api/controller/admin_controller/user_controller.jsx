@@ -27,7 +27,7 @@ export const registerEmployee = async (data) => {
 }
 export const registerSeller = async (data) => {
   try {
-    const response = await axiosInstance.post(`/api/users/create-seller`, data, { skipAuth: true });
+    const response = await axiosInstance.post(`/api/users/create`, data, { skipAuth: true });
     return response.data; // Return the response from the API
   } catch (error) {
     console.error("Error add Seller data:", error);
@@ -35,6 +35,19 @@ export const registerSeller = async (data) => {
   }
 
 }
+export const checkReferralCode = async (code) => {
+  try {
+    const response = await axiosInstance.get(`/api/users/check-referral-code`, {
+      params: { referral_code: code },
+      skipAuth: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error checking referral code:", error);
+    throw error;
+  }
+};
+
 export const uploadProfileImage = async (data) => {
   try {
     const response = await axiosInstance.post(`/api/upload-user-image`, data,
