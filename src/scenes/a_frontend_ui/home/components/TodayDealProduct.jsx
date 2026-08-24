@@ -11,6 +11,7 @@ const safeArray = (x) => (Array.isArray(x) ? x : []);
 export default function TodayDealProduct({ onView, compact = false, title, storeParams = {} }) {
     const navigate = useNavigate();
     const scrollRef = useRef(null);
+    const storeSlug = storeParams?.store_slug || "";
 
     const [loading, setLoading] = useState(false);
     const [items, setItems] = useState([]);
@@ -100,7 +101,7 @@ export default function TodayDealProduct({ onView, compact = false, title, store
     };
 
     const handleSeeAll = () => {
-        navigate("/today-deals");
+        navigate(storeSlug ? `/store/${encodeURIComponent(String(storeSlug))}/today-deals` : "/today-deals");
     };
 
     useEffect(() => {

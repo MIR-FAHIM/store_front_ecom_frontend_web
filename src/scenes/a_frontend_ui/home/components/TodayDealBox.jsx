@@ -11,6 +11,7 @@ const safeArray = (x) => (Array.isArray(x) ? x : []);
 export default function TodayDealBox({ onView, storeParams = {} }) {
   const theme = useTheme();
   const navigate = useNavigate();
+  const storeSlug = storeParams?.store_slug || "";
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
   const [index, setIndex] = useState(0);
@@ -75,12 +76,12 @@ export default function TodayDealBox({ onView, storeParams = {} }) {
               <Typography
                 variant="caption"
                 sx={{ fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", color: "gray" }}
-                onClick={() => navigate("/today-deals")}
+                onClick={() => navigate(storeSlug ? `/store/${encodeURIComponent(String(storeSlug))}/today-deals` : "/today-deals")}
               >
                 See all
               </Typography>
             </Box>
-            <SmartProductCard product={current} onView={() => onView?.(current)} />
+            <SmartProductCard product={current} storeSlug={storeSlug} onView={() => onView?.(current)} />
           </Box>
         ) : (
           <Typography variant="body2" color="text.secondary">

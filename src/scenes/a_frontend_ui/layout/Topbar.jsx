@@ -50,7 +50,7 @@ import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
 import LabelOutlinedIcon from "@mui/icons-material/LabelOutlined";
 
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { tokens } from "../../../theme.js";
 import { image_file_url } from "../../../api/config/index.jsx";
 import { getUserDetail } from "../../../api/controller/admin_controller/user_controller.jsx";
@@ -62,6 +62,7 @@ import { normalizeCategoryList } from "../../../utils/categoryTree";
 import { categoriesPath, categoryPath, storeHomePath } from "../../../utils/productRoute";
 import SearchProduct from "../search_product/SearchProduct.jsx";
 import { useTranslation } from "react-i18next";
+import { useStorefront } from "../../../context/StorefrontContext";
 
 const buildImageUrl = (media) => {
   if (!media) return "";
@@ -425,7 +426,7 @@ const NAV_ITEMS = [
   { label: "All Categories", path: "/categories", key: "categories", icon: <CategoryOutlinedIcon fontSize="small" /> },
 ];
 
-function MobileDrawer({ open, onClose, navigate, categories, colors, border, glass, user, initials, t, i18n, handleLangChange, handleLogout, storeSlug = "" }) {
+function MobileDrawer({ open, onClose, navigate, categories, colors, border, glass, user, initials, t, i18n, handleLangChange, handleLogout, handleAuthNavigate, storeSlug = "", storePath = (path) => path }) {
   const [catOpen, setCatOpen] = useState(false);
   const [expandedCat, setExpandedCat] = useState(null);
 
@@ -473,7 +474,7 @@ function MobileDrawer({ open, onClose, navigate, categories, colors, border, gla
               ? storeHomePath(storeSlug)
               : item.key === "categories"
                 ? categoriesPath(storeSlug)
-                : item.path;
+                : storePath(item.path);
             return (
               <ListItemButton key={item.path} onClick={() => { onClose(); navigate(path); }} sx={{ px: 2, py: 1, "&:hover": { bgcolor: colors.primary[400] } }}>
                 <ListItemIcon sx={{ minWidth: 30, color: colors.gray[400] }}>{item.icon}</ListItemIcon>
@@ -526,7 +527,7 @@ function MobileDrawer({ open, onClose, navigate, categories, colors, border, gla
             <ListItemIcon sx={{ minWidth: 30, color: colors.gray[400] }}><StorefrontIcon fontSize="small" /></ListItemIcon>
             <ListItemText primary="Seller Register" primaryTypographyProps={{ fontSize: 13, color: colors.gray[100] }} />
           </ListItemButton>
-          <ListItemButton onClick={() => { onClose(); navigate("/about"); }} sx={{ px: 2, py: 1, "&:hover": { bgcolor: colors.primary[400] } }}>
+          <ListItemButton onClick={() => { onClose(); navigate(storePath("/about")); }} sx={{ px: 2, py: 1, "&:hover": { bgcolor: colors.primary[400] } }}>
             <ListItemIcon sx={{ minWidth: 30, color: colors.gray[400] }}><InfoOutlinedIcon fontSize="small" /></ListItemIcon>
             <ListItemText primary="About" primaryTypographyProps={{ fontSize: 13, color: colors.gray[100] }} />
           </ListItemButton>
@@ -536,11 +537,11 @@ function MobileDrawer({ open, onClose, navigate, categories, colors, border, gla
           {/* Auth */}
           {user ? (
             <>
-              <ListItemButton onClick={() => { onClose(); navigate("/orders"); }} sx={{ px: 2, py: 1, "&:hover": { bgcolor: colors.primary[400] } }}>
+              <ListItemButton onClick={() => { onClose(); navigate(storePath("/orders")); }} sx={{ px: 2, py: 1, "&:hover": { bgcolor: colors.primary[400] } }}>
                 <ListItemIcon sx={{ minWidth: 30, color: colors.gray[400] }}><HistoryIcon fontSize="small" /></ListItemIcon>
                 <ListItemText primary="Order History" primaryTypographyProps={{ fontSize: 13, color: colors.gray[100] }} />
               </ListItemButton>
-              <ListItemButton onClick={() => { onClose(); navigate("/profile"); }} sx={{ px: 2, py: 1, "&:hover": { bgcolor: colors.primary[400] } }}>
+              <ListItemButton onClick={() => { onClose(); navigate(storePath("/profile")); }} sx={{ px: 2, py: 1, "&:hover": { bgcolor: colors.primary[400] } }}>
                 <ListItemIcon sx={{ minWidth: 30, color: colors.gray[400] }}><PersonIcon fontSize="small" /></ListItemIcon>
                 <ListItemText primary="Profile" primaryTypographyProps={{ fontSize: 13, color: colors.gray[100] }} />
               </ListItemButton>
@@ -551,11 +552,11 @@ function MobileDrawer({ open, onClose, navigate, categories, colors, border, gla
             </>
           ) : (
             <>
-              <ListItemButton onClick={() => { onClose(); navigate("/login"); }} sx={{ px: 2, py: 1, "&:hover": { bgcolor: colors.primary[400] } }}>
+              <ListItemButton onClick={() => { onClose(); handleAuthNavigate("/login"); }} sx={{ px: 2, py: 1, "&:hover": { bgcolor: colors.primary[400] } }}>
                 <ListItemIcon sx={{ minWidth: 30, color: colors.gray[400] }}><AccountCircleIcon fontSize="small" /></ListItemIcon>
                 <ListItemText primary="Login" primaryTypographyProps={{ fontSize: 13, color: colors.gray[100] }} />
               </ListItemButton>
-              <ListItemButton onClick={() => { onClose(); navigate("/register"); }} sx={{ px: 2, py: 1, "&:hover": { bgcolor: colors.primary[400] } }}>
+              <ListItemButton onClick={() => { onClose(); handleAuthNavigate("/register"); }} sx={{ px: 2, py: 1, "&:hover": { bgcolor: colors.primary[400] } }}>
                 <ListItemIcon sx={{ minWidth: 30, color: colors.gray[400] }}><AccountCircleIcon fontSize="small" /></ListItemIcon>
                 <ListItemText primary="Register" primaryTypographyProps={{ fontSize: 13, color: colors.gray[100] }} />
               </ListItemButton>
@@ -580,9 +581,7 @@ function MobileDrawer({ open, onClose, navigate, categories, colors, border, gla
 
 const Topbar = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const storeMatch = location.pathname.match(/^\/store\/([^/]+)/);
-  const storeSlug = storeMatch ? decodeURIComponent(storeMatch[1]) : "";
+  const { currentStoreSlug: storeSlug, storePath } = useStorefront();
   const theme = useTheme();
   const { t, i18n } = useTranslation();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -726,13 +725,18 @@ const Topbar = () => {
     handleLangClose();
   };
 
+  const handleAuthNavigate = (path) => {
+    if (storeSlug) sessionStorage.setItem("auth_redirect", `${window.location.pathname}${window.location.search}`);
+    navigate(path);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userId");
     setUser(null);
     handleMenuClose();
     window.dispatchEvent(new Event("auth-changed"));
-    navigate("/");
+    navigate(storePath("/"));
   };
 
   return (
@@ -813,14 +817,14 @@ const Topbar = () => {
 
           {/* Wishlist */}
           <Tooltip title={t("topbar.wishlist")}>
-            <IconButton onClick={() => navigate("/wish")} sx={{ borderRadius: 2, border: `1px solid ${border}`, background: glass, color: colors.gray[100], "&:hover": { background: glass2, transform: "translateY(-1px)" }, transition: "transform 120ms ease" }}>
+            <IconButton onClick={() => navigate(storePath("/wish"))} sx={{ borderRadius: 2, border: `1px solid ${border}`, background: glass, color: colors.gray[100], "&:hover": { background: glass2, transform: "translateY(-1px)" }, transition: "transform 120ms ease" }}>
               <Badge badgeContent={wishCount} color="secondary"><FavoriteIcon sx={{ fontSize: { xs: 20, sm: 22 } }} /></Badge>
             </IconButton>
           </Tooltip>
 
           {/* Cart */}
           <Tooltip title={t("topbar.cart")}>
-            <IconButton onClick={() => navigate("/cart")} sx={{ borderRadius: 2, border: `1px solid ${border}`, background: theme.palette.secondary.main, color: colors.gray[900], "&:hover": { opacity: 0.9, transform: "translateY(-1px)" }, transition: "transform 120ms ease" }}>
+            <IconButton onClick={() => navigate(storePath("/cart"))} sx={{ borderRadius: 2, border: `1px solid ${border}`, background: theme.palette.secondary.main, color: colors.gray[900], "&:hover": { opacity: 0.9, transform: "translateY(-1px)" }, transition: "transform 120ms ease" }}>
               <Badge badgeContent={cartCount} color="error"><ShoppingCartIcon sx={{ fontSize: { xs: 20, sm: 22 } }} /></Badge>
             </IconButton>
           </Tooltip>
@@ -847,17 +851,17 @@ const Topbar = () => {
                     <Chip size="small" label={t("topbar.menu.verified")} sx={{ mt: 1, borderRadius: 999, fontWeight: 600, background: glass, border: `1px solid ${border}` }} />
                   </Box>
                   <Divider sx={{ opacity: 0.12 }} />
-                  <MenuItem onClick={() => { handleMenuClose(); navigate("/orders"); }}><ListItemIcon><HistoryIcon fontSize="small" /></ListItemIcon>{t("topbar.menu.orderHistory")}</MenuItem>
-                  <MenuItem onClick={() => { handleMenuClose(); navigate("/profile"); }}><ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>{t("topbar.menu.profile")}</MenuItem>
-                  <MenuItem onClick={() => { handleMenuClose(); navigate("/wish"); }}><ListItemIcon><FavoriteIcon fontSize="small" /></ListItemIcon>{t("topbar.menu.wishList")}</MenuItem>
+                  <MenuItem onClick={() => { handleMenuClose(); navigate(storePath("/orders")); }}><ListItemIcon><HistoryIcon fontSize="small" /></ListItemIcon>{t("topbar.menu.orderHistory")}</MenuItem>
+                  <MenuItem onClick={() => { handleMenuClose(); navigate(storePath("/profile")); }}><ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>{t("topbar.menu.profile")}</MenuItem>
+                  <MenuItem onClick={() => { handleMenuClose(); navigate(storePath("/wish")); }}><ListItemIcon><FavoriteIcon fontSize="small" /></ListItemIcon>{t("topbar.menu.wishList")}</MenuItem>
                   <Divider sx={{ opacity: 0.12 }} />
                   <MenuItem onClick={handleLogout} sx={{ color: "error.main" }}><ListItemIcon><LogoutIcon fontSize="small" color="error" /></ListItemIcon>{t("topbar.menu.logout")}</MenuItem>
                 </Menu>
               </>
             ) : (
               <Box sx={{ display: "flex", gap: 0.8, ml: 0.4 }}>
-                <Button onClick={() => navigate("/login")} size="small" sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700, fontSize: 12, border: `1px solid ${border}`, background: glass, color: colors.gray[100], px: 1.4, "&:hover": { background: glass2 } }}>Login</Button>
-                <Button onClick={() => navigate("/register")} size="small" variant="contained" sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700, fontSize: 12, px: 1.4 }}>Register</Button>
+                <Button onClick={() => handleAuthNavigate("/login")} size="small" sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700, fontSize: 12, border: `1px solid ${border}`, background: glass, color: colors.gray[100], px: 1.4, "&:hover": { background: glass2 } }}>Login</Button>
+                <Button onClick={() => handleAuthNavigate("/register")} size="small" variant="contained" sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700, fontSize: 12, px: 1.4 }}>Register</Button>
               </Box>
             )
           )}
@@ -875,14 +879,14 @@ const Topbar = () => {
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>{user?.email}</Typography>
                   </Box>
                   <Divider sx={{ opacity: 0.12 }} />
-                  <MenuItem onClick={() => { handleMenuClose(); navigate("/orders"); }}><ListItemIcon><HistoryIcon fontSize="small" /></ListItemIcon>Orders</MenuItem>
-                  <MenuItem onClick={() => { handleMenuClose(); navigate("/profile"); }}><ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>Profile</MenuItem>
+                  <MenuItem onClick={() => { handleMenuClose(); navigate(storePath("/orders")); }}><ListItemIcon><HistoryIcon fontSize="small" /></ListItemIcon>Orders</MenuItem>
+                  <MenuItem onClick={() => { handleMenuClose(); navigate(storePath("/profile")); }}><ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>Profile</MenuItem>
                   <Divider sx={{ opacity: 0.12 }} />
                   <MenuItem onClick={handleLogout} sx={{ color: "error.main" }}><ListItemIcon><LogoutIcon fontSize="small" color="error" /></ListItemIcon>Logout</MenuItem>
                 </Menu>
               </>
             ) : (
-              <IconButton onClick={() => navigate("/login")} sx={{ borderRadius: 2, border: `1px solid ${border}`, background: glass, color: colors.gray[100], "&:hover": { background: glass2 } }}>
+              <IconButton onClick={() => handleAuthNavigate("/login")} sx={{ borderRadius: 2, border: `1px solid ${border}`, background: glass, color: colors.gray[100], "&:hover": { background: glass2 } }}>
                 <AccountCircleIcon sx={{ fontSize: 22 }} />
               </IconButton>
             )
@@ -957,9 +961,9 @@ const Topbar = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             {[
               { label: "Home", path: storeHomePath(storeSlug) },
-              { label: "Flash Sale", path: "/flash-sale" },
-              { label: "Blogs", path: "/blogs" },
-              { label: "All Brands", path: "/brands" },
+              { label: "Flash Sale", path: storePath("/flash-sale") },
+              { label: "Blogs", path: storePath("/blogs") },
+              { label: "All Brands", path: storePath("/brands") },
               { label: "All Categories", path: categoriesPath(storeSlug) },
             ].map((item) => (
               <Button
@@ -975,7 +979,7 @@ const Topbar = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <Button onClick={() => navigate("/seller-login")} startIcon={<StorefrontIcon sx={{ fontSize: 14 }} />} sx={{ textTransform: "none", fontWeight: 500, fontSize: 12, color: colors.gray[300], px: 1, py: 0.4, borderRadius: 1.5, "&:hover": { background: colors.primary[400], color: colors.gray[100] } }}>Seller Login</Button>
             <Button onClick={() => navigate("/seller-register")} startIcon={<StorefrontIcon sx={{ fontSize: 14 }} />} sx={{ textTransform: "none", fontWeight: 500, fontSize: 12, color: colors.gray[300], px: 1, py: 0.4, borderRadius: 1.5, "&:hover": { background: colors.primary[400], color: colors.gray[100] } }}>Seller Register</Button>
-            <Button onClick={() => navigate("/about")} startIcon={<InfoOutlinedIcon sx={{ fontSize: 14 }} />} sx={{ textTransform: "none", fontWeight: 500, fontSize: 12, color: colors.gray[300], px: 1, py: 0.4, borderRadius: 1.5, "&:hover": { background: colors.primary[400], color: colors.gray[100] } }}>About</Button>
+            <Button onClick={() => navigate(storePath("/about"))} startIcon={<InfoOutlinedIcon sx={{ fontSize: 14 }} />} sx={{ textTransform: "none", fontWeight: 500, fontSize: 12, color: colors.gray[300], px: 1, py: 0.4, borderRadius: 1.5, "&:hover": { background: colors.primary[400], color: colors.gray[100] } }}>About</Button>
             <Divider orientation="vertical" flexItem sx={{ opacity: 0.2, mx: 0.5 }} />
             <Typography variant="caption" sx={{ fontWeight: 700, color: "#000000", whiteSpace: "nowrap", fontSize: 11 }}>
               Helpline: <Box component="span" sx={{ color: colors.gray[100], ml: 0.3 }}>+88 09611-677686</Box>
@@ -1005,7 +1009,9 @@ const Topbar = () => {
       i18n={i18n}
       handleLangChange={handleLangChange}
       handleLogout={handleLogout}
+      handleAuthNavigate={handleAuthNavigate}
       storeSlug={storeSlug}
+      storePath={storePath}
     />
     </>
   );

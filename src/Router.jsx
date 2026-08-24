@@ -104,6 +104,8 @@ import TodayDealsPage from "./scenes/a_frontend_ui/product/today_deal/TodayDeals
 import SellerLayout from "./scenes/seller_panel/layout/SellerLayout";
 import SellerDashboard from "./scenes/seller_panel/dashboard/index";
 import SellerPanelProducts from "./scenes/seller_panel/product/SellerProducts";
+import SellerProductCatalog from "./scenes/seller_panel/product/SellerProductCatalog";
+import StoreProductEdit from "./scenes/seller_panel/product/StoreProductEdit";
 import SellerShopList from "./scenes/seller_panel/shop/SellerShopList";
 import SellerShopProduct from "./scenes/seller_panel/shop/SellerShopProduct";
 import AddProductTabSeller from "./scenes/seller_panel/product/add_product/AddProductTab";
@@ -116,8 +118,34 @@ import SettledAmountHistory from "./scenes/seller_panel/accounting/settled_amoun
 import MerchantPackages from "./scenes/seller_panel/subscription/MerchantPackages";
 import SellerBannerManager from "./scenes/seller_panel/banner/SellerBannerManager";
 import SellerCategoryManagement from "./scenes/seller_panel/category/SellerCategoryManagement";
+import MediaMarketplace from "./scenes/seller_panel/media/MediaMarketplace";
+import MediaResourceDetails from "./scenes/seller_panel/media/MediaResourceDetails";
+import MediaOrders from "./scenes/seller_panel/media/MediaOrders";
+import MediaOrderDetails from "./scenes/seller_panel/media/MediaOrderDetails";
+import MediaOrderPaymentResult from "./scenes/seller_panel/media/MediaOrderPaymentResult";
+import SellerMediaLibrary from "./scenes/seller_panel/media/SellerMediaLibrary";
+import AdminMediaMarketplace from "./scenes/admin_panel/media_marketplace/AdminMediaMarketplace";
+import { storeScopedPath } from "./utils/productRoute";
+import SellerStoreQrPanel from "./scenes/seller_panel/store_qr/SellerStoreQrPanel";
 
 
+
+const readActiveStoreSlug = () => {
+  try {
+    return sessionStorage.getItem("active_store_slug") || "";
+  } catch {
+    return "";
+  }
+};
+
+const StorefrontRedirect = ({ path = "" }) => {
+  const location = useLocation();
+  const storeSlug = readActiveStoreSlug();
+  if (!storeSlug) return <Navigate to="/store-owner" replace />;
+
+  const targetPath = path || location.pathname;
+  return <Navigate to={`${storeScopedPath(targetPath, storeSlug)}${location.search || ""}`} replace />;
+};
 
 const AppRouter = () => {
   return (
@@ -140,56 +168,83 @@ const AppRouter = () => {
           <>
             <Route path="/seller-login" element={<SellerLogin />}></Route>
             <Route path="/seller-register" element={<SellerRegister />}></Route>
+            <Route path="/seller/stores/:storeId/media-orders/:orderId/payment-success" element={<MediaOrderPaymentResult result="success" />}></Route>
+            <Route path="/seller/stores/:storeId/media-orders/:orderId/payment-failed" element={<MediaOrderPaymentResult result="failed" />}></Route>
+            <Route path="/seller/stores/:storeId/media-orders/:orderId/payment-cancelled" element={<MediaOrderPaymentResult result="cancelled" />}></Route>
           </>
         )}
         {/* Public / storefront routes */}
         {hasCustomerSite && (
           <Route path="/" element={<FrontendLayout />}>
-            <Route path="home" element={<HomeP1 />} />
+            <Route path="home" element={<StorefrontRedirect path="/" />} />
             <Route path="store/:slug" element={<HomeP1 />} />
 
-            <Route path="featured-products" element={<FeaturedProductList />} />
+            <Route path="featured-products" element={<StorefrontRedirect />} />
             <Route path="store/:slug/featured-products" element={<FeaturedProductList />} />
 
-            <Route path="profile" element={<Profile />} />
+            <Route path="profile" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/profile" element={<Profile />} />
 
-            <Route path="product/:idOrSlug" element={<ProductDetail />} />
+            <Route path="product/:idOrSlug" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/products" element={<AllProductsPage />} />
             <Route path="store/:slug/products/:idOrSlug" element={<ProductDetail />} />
+            <Route path="store/:slug/product/:idOrSlug" element={<ProductDetail />} />
             <Route path="store/:slug/category/:id" element={<CategoryWiseProduct />} />
-            <Route path="shop/:id" element={<ShopProducts />} />
-            <Route path="shops" element={<ShopList />} />
-            <Route path="category/:id" element={<CategoryWiseProduct />} />
-            <Route path="cart" element={<Cart />} />
-            <Route path="orders" element={<UserOrder />} />
-            <Route path="order/:id" element={<UserOrderDetails />} />
-            <Route path="checkout" element={<ProceedOrder />} />
-            <Route path="order-success" element={<OrderSuccessPage />} />
-            <Route path="payment-success" element={<PaymentSuccessPage />} />
-            <Route path="payment-failed" element={<PaymentFailedPage />} />
-            <Route path="payment-cancelled" element={<PaymentCancelledPage />} />
-            <Route path="payments/aamarpay/success" element={<PaymentSuccessPage />} />
-            <Route path="payments/aamarpay/fail" element={<PaymentFailedPage />} />
-            <Route path="payments/aamarpay/cancel" element={<PaymentCancelledPage />} />
-            <Route path="privacy" element={<Privacy />} />
-            <Route path="terms" element={<Terms />} />
-            <Route path="blogs" element={<Blogs />} />
-            <Route path="flash-sale" element={<FlashSale />} />
-            <Route path="about" element={<About />} />
-            <Route path="contact" element={<Contact />} />
-            <Route path="proceed-order" element={<ProceedOrder />} />
-            <Route path="wish" element={<Wish />} />
-            <Route path="related-product" element={<RelatedProduct />} />
-            <Route path="product-review" element={<ProductReview />} />
-            <Route path="seller/add" element={<AddShop />} />
-            <Route path="brands" element={<Brand />} />
-            <Route path="brands/:brandId/products" element={<BrandProductsPage />} />
-            <Route path="categories" element={<AllCategory />} />
+            <Route path="shop/:id" element={<StorefrontRedirect path="/" />} />
+            <Route path="shops" element={<StorefrontRedirect path="/" />} />
+            <Route path="category/:id" element={<StorefrontRedirect />} />
+            <Route path="cart" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/cart" element={<Cart />} />
+            <Route path="orders" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/orders" element={<UserOrder />} />
+            <Route path="order/:id" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/order/:id" element={<UserOrderDetails />} />
+            <Route path="checkout" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/checkout" element={<ProceedOrder />} />
+            <Route path="order-success" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/order-success" element={<OrderSuccessPage />} />
+            <Route path="payment-success" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/payment-success" element={<PaymentSuccessPage />} />
+            <Route path="payment-failed" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/payment-failed" element={<PaymentFailedPage />} />
+            <Route path="payment-cancelled" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/payment-cancelled" element={<PaymentCancelledPage />} />
+            <Route path="payments/aamarpay/success" element={<StorefrontRedirect path="/payment-success" />} />
+            <Route path="payments/aamarpay/fail" element={<StorefrontRedirect path="/payment-failed" />} />
+            <Route path="payments/aamarpay/cancel" element={<StorefrontRedirect path="/payment-cancelled" />} />
+            <Route path="privacy" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/privacy" element={<Privacy />} />
+            <Route path="terms" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/terms" element={<Terms />} />
+            <Route path="blogs" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/blogs" element={<Blogs />} />
+            <Route path="flash-sale" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/flash-sale" element={<FlashSale />} />
+            <Route path="about" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/about" element={<About />} />
+            <Route path="contact" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/contact" element={<Contact />} />
+            <Route path="proceed-order" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/proceed-order" element={<ProceedOrder />} />
+            <Route path="wish" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/wish" element={<Wish />} />
+            <Route path="related-product" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/related-product" element={<RelatedProduct />} />
+            <Route path="product-review" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/product-review" element={<ProductReview />} />
+            <Route path="seller/add" element={<Navigate to="/seller-register" replace />} />
+            <Route path="brands" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/brands" element={<Brand />} />
+            <Route path="brands/:brandId/products" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/brands/:brandId/products" element={<BrandProductsPage />} />
+            <Route path="categories" element={<StorefrontRedirect />} />
             <Route path="store/:slug/categories" element={<AllCategory />} />
-            <Route path="categories/home" element={<CategoryWiseProductHome />} />
-            <Route path="search" element={<SearchedProductList />} />
+            <Route path="categories/home" element={<StorefrontRedirect />} />
+            <Route path="store/:slug/categories/home" element={<CategoryWiseProductHome />} />
+            <Route path="search" element={<StorefrontRedirect />} />
             <Route path="store/:slug/search" element={<SearchedProductList />} />
-            <Route path="all-products" element={<AllProductsPage />} />
-            <Route path="today-deals" element={<TodayDealsPage />} />
+            <Route path="all-products" element={<StorefrontRedirect />} />
+            <Route path="today-deals" element={<StorefrontRedirect />} />
             <Route path="store/:slug/all-products" element={<AllProductsPage />} />
             <Route path="store/:slug/today-deals" element={<TodayDealsPage />} />
 
@@ -256,12 +311,17 @@ const AppRouter = () => {
 
           <Route path="/ecom/banner/add" element={<AddBanner />} />
           <Route path="/ecom/media/all" element={<AllMedia />} />
+          <Route path="/admin/media-marketplace" element={<AdminMediaMarketplace />} />
 
         </Route>`r`n
         {hasSellerPanel && (
           <Route path="/seller" element={<RequireSeller><SellerLayout /></RequireSeller>}>
             <Route path="dashboard" element={<SellerDashboard />} />
             <Route path="products" element={<SellerPanelProducts />} />
+            <Route path="catalog" element={<SellerProductCatalog />} />
+            <Route path="stores/:storeId/products" element={<SellerPanelProducts />} />
+            <Route path="stores/:storeId/catalog" element={<SellerProductCatalog />} />
+            <Route path="stores/:storeId/products/:storeProductId/edit" element={<StoreProductEdit />} />
             <Route path="shops" element={<SellerShopList />} />
             <Route path="shops/add" element={<AddShop />} />
             <Route path="shops/products" element={<SellerShopProduct />} />
@@ -272,8 +332,15 @@ const AppRouter = () => {
             <Route path="pos" element={<PosManagementSeller />} />
             <Route path="packages" element={<MerchantPackages />} />
             <Route path="banners" element={<SellerBannerManager />} />
+            <Route path="store-qr" element={<SellerStoreQrPanel />} />
             <Route path="categories" element={<SellerCategoryManagement />} />
             <Route path="stores/:storeId/categories" element={<SellerCategoryManagement />} />
+            <Route path="media-marketplace" element={<MediaMarketplace />} />
+            <Route path="media-library" element={<SellerMediaLibrary />} />
+            <Route path="media-marketplace/resources/:idOrSlug" element={<MediaResourceDetails />} />
+            <Route path="media-orders" element={<MediaOrders />} />
+            <Route path="stores/:storeId/media-orders" element={<MediaOrders />} />
+            <Route path="stores/:storeId/media-orders/:orderId" element={<MediaOrderDetails />} />
             <Route path="orders/:id" element={<SellerOrderDetails />} />
             <Route path="accounting/settled-amount-history" element={<SettledAmountHistory />} />
 

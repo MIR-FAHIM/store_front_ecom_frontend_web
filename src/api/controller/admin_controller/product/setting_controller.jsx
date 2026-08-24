@@ -20,9 +20,11 @@ export const addAttribute = async (data) => {
 
 export const getBrand = async (params = {}) => {
   try {
+    const isStoreScopedRequest = Boolean(params?.store_slug || params?.store_id);
     const response = await axiosInstance.get(`/api/brands/list`, {
       params,
-      headers: {
+      skipAuth: isStoreScopedRequest,
+      headers: isStoreScopedRequest ? {} : {
         'Authorization': `Bearer ${localStorage.getItem("authToken")}`, // Add the token in Authorization header
       },
     });

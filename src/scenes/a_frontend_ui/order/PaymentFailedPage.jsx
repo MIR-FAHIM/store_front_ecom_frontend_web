@@ -15,6 +15,7 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import ReplayIcon from "@mui/icons-material/Replay";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import HomeIcon from "@mui/icons-material/Home";
+import { storeScopedPath } from "../../../utils/productRoute";
 
 const readStoredPayment = () => {
   try {
@@ -57,6 +58,12 @@ const PaymentFailedPage = () => {
   );
   const paymentType = firstValue(params.get("payment_type"), payment.payment_type, storedSubscription.paymentType);
   const storeId = firstValue(params.get("store_id"), payment.store_id, storedSubscription.storeId);
+  const storeSlug = firstValue(
+    params.get("store_slug"),
+    payment.store_slug,
+    storedPayment.storeSlug,
+    sessionStorage.getItem("active_store_slug")
+  );
   const paymentId = firstValue(params.get("payment_id"), payment.payment_id, storedSubscription.paymentId);
   const isSubscriptionPayment =
     String(paymentType || "").toLowerCase() === "store_subscription" ||
@@ -70,6 +77,7 @@ const PaymentFailedPage = () => {
     "Payment could not be completed."
   );
   const status = firstValue(params.get("status"), params.get("pay_status"), payment.status);
+  const scopedPath = (path) => storeScopedPath(path, storeSlug || "");
 
   useEffect(() => {
     if (isSubscriptionPayment) sessionStorage.removeItem("aamarpay_pending_subscription");
@@ -206,7 +214,7 @@ const PaymentFailedPage = () => {
                 size="large"
                 fullWidth
                 startIcon={<ReplayIcon />}
-                onClick={() => navigate(isSubscriptionPayment ? "/seller/packages" : "/checkout")}
+                onClick={() => navigate(isSubscriptionPayment ? "/seller/packages" : scopedPath("/checkout"))}
                 sx={{
                   textTransform: "none",
                   fontWeight: 800,
@@ -224,7 +232,7 @@ const PaymentFailedPage = () => {
                 size="large"
                 fullWidth
                 startIcon={<ShoppingBagIcon />}
-                onClick={() => navigate(isSubscriptionPayment ? "/seller/packages" : "/orders")}
+                onClick={() => navigate(isSubscriptionPayment ? "/seller/packages" : scopedPath("/orders"))}
                 sx={{ textTransform: "none", fontWeight: 800, borderRadius: 2, py: 1.2 }}
               >
                 {isSubscriptionPayment ? "Back to Packages" : "View orders"}
@@ -235,7 +243,7 @@ const PaymentFailedPage = () => {
               <Button
                 variant="text"
                 startIcon={<HomeIcon />}
-                onClick={() => navigate("/")}
+                onClick={() => navigate(scopedPath("/"))}
                 sx={{ textTransform: "none", fontWeight: 800 }}
               >
                 Continue shopping

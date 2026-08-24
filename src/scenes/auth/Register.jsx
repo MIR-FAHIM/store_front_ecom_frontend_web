@@ -18,6 +18,13 @@ const Register = () => {
 
   const isPhone = (val) => /^\d{11}$/.test(val.trim());
   const isEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+  const consumeAuthRedirect = () => {
+    const redirect = sessionStorage.getItem('auth_redirect');
+    sessionStorage.removeItem('auth_redirect');
+    if (redirect && String(redirect).startsWith('/')) return redirect;
+    const activeStoreSlug = sessionStorage.getItem('active_store_slug');
+    return activeStoreSlug ? `/store/${encodeURIComponent(String(activeStoreSlug))}` : '/';
+  };
 
   useEffect(() => {
     if (location.state?.phoneNumber) {
@@ -87,7 +94,7 @@ const Register = () => {
 
       localStorage.setItem('authToken', token);
       localStorage.setItem('userId', userId);
-      navigate('/');
+      navigate(consumeAuthRedirect());
     } catch (err) {
       console.error(err);
       const emailError = err?.response?.data?.errors?.email;

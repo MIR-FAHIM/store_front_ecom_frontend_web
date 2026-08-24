@@ -39,6 +39,7 @@ import RelatedProduct from "./related_product/RelatedProduct";
 import ProductReview from "./review_product/ProductReview";
 import { tokens } from "../../../theme";
 import { storeHomePath } from "../../../utils/productRoute";
+import { useStorefront } from "../../../context/StorefrontContext";
 
 const safeJsonParse = (value, fallback) => {
   try {
@@ -75,10 +76,25 @@ const stripHtml = (value) => {
   return String(value).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 };
 
+const resolveCartProductPayload = (product, storeSlug = "") => {
+  const productId = product?.product_id ?? product?.product?.id ?? product?.id;
+  const storeProductId = product?.store_product_id ?? product?.store_product?.id ?? (product?.product_id ? product?.id : null);
+  const storeId = product?.store_id || product?.store?.id || product?.shop?.store_id;
+
+  return {
+    product_id: productId,
+    ...(storeProductId ? { store_product_id: storeProductId } : {}),
+    ...(storeSlug ? { store_slug: storeSlug } : {}),
+    ...(storeSlug && storeId ? { store_id: storeId } : {}),
+  };
+};
+
 const ProductDetail = () => {
   const theme = useTheme();
   const { idOrSlug: productIdentifier, slug } = useParams();
   const navigate = useNavigate();
+  const { currentStoreSlug, storePath, storeParams } = useStorefront();
+  const activeStoreSlug = slug || currentStoreSlug;
 
   const colors = tokens(theme.palette.mode);
   const divider = theme.palette.divider || colors.primary[200];
@@ -208,6 +224,9 @@ const ProductDetail = () => {
   // Main price to display
   const mainPrice = useMemo(() => (finalSalePrice > 0 ? finalSalePrice : unitPrice), [finalSalePrice, unitPrice]);
   const hasDiscount = useMemo(() => finalSalePrice > 0 && finalSalePrice < unitPrice, [finalSalePrice, unitPrice]);
+  const storePayload = useMemo(() => {
+    return resolveCartProductPayload(product, activeStoreSlug);
+  }, [activeStoreSlug, product]);
 
   const calculatedDiscountAmount = useMemo(() => {
     if (hasDiscount) return Math.max(unitPrice - finalSalePrice, 0);
@@ -312,6 +331,7 @@ const ProductDetail = () => {
 
     if (!userId) {
       setMsg("Please login to add to cart.");
+      sessionStorage.setItem("auth_redirect", `${window.location.pathname}${window.location.search}`);
       navigate("/login");
       return;
     }
@@ -324,15 +344,15 @@ const ProductDetail = () => {
     try {
       const payload = {
         user_id: userId,
-        product_id: product.id,
         qty: Number(qty || 1),
         attribute_id: selectedAttributeId ?? null,
         price: mainPrice, // send final_sale_price to cart
+        ...storePayload,
       };
       const res = await addCart(payload);
 
       if (res?.status === "success") {
-        const cartRes = await getCartByUser(userId);
+        const cartRes = await getCartByUser(userId, storeParams);
         const total =
           cartRes?.data?.total_items ??
           (Array.isArray(cartRes?.data?.items) ? cartRes.data.items.length : 0);
@@ -355,6 +375,7 @@ const ProductDetail = () => {
 
     if (!userId) {
       setMsg("Please login to add to cart.");
+      sessionStorage.setItem("auth_redirect", `${window.location.pathname}${window.location.search}`);
       navigate("/login");
       return;
     }
@@ -367,22 +388,22 @@ const ProductDetail = () => {
     try {
       const payload = {
         user_id: userId,
-        product_id: product.id,
         qty: Number(qty || 1),
         attribute_id: selectedAttributeId ?? null,
         price: mainPrice, // send final_sale_price to cart
+        ...storePayload,
       };
       const res = await addCart(payload);
 
       if (res?.status === "success") {
-        const cartRes = await getCartByUser(userId);
+        const cartRes = await getCartByUser(userId, storeParams);
         const total =
           cartRes?.data?.total_items ??
           (Array.isArray(cartRes?.data?.items) ? cartRes.data.items.length : 0);
 
         localStorage.setItem("cart", JSON.stringify(total));
         window.dispatchEvent(new Event("cart-updated"));
-        navigate("/cart");
+        navigate(storePath("/cart"));
       } else {
         setMsg(res?.message || "Failed to add to cart");
       }

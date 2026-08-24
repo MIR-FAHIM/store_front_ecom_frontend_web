@@ -5,6 +5,7 @@ import BoltIcon from "@mui/icons-material/Bolt";
 import { useNavigate } from "react-router-dom";
 import { getWebsiteSetting } from "../../../api/controller/admin_controller/website_setting/website_setting_controller.jsx";
 import { image_file_url } from "../../../api/config/index.jsx";
+import { useStorefront } from "../../../context/StorefrontContext";
 
 const buildImageUrl = (media) => {
   if (!media) return "";
@@ -19,6 +20,7 @@ const buildImageUrl = (media) => {
 
 const BottomBar = () => {
   const navigate = useNavigate();
+  const { storePath } = useStorefront();
   const [brand, setBrand] = useState({
     name: "ShopLogo",
     slogan: "Trendy picks, fast checkout",
@@ -78,10 +80,10 @@ const BottomBar = () => {
         }}
       >
         {[
-          { icon: <Description sx={{ fontSize: 28, color: "#444" }} />, label: "Terms & Conditions", path: "/terms" },
-          { icon: <Undo sx={{ fontSize: 28, color: "#444" }} />, label: "Return Policy", path: "/return-policy" },
-          { icon: <HeadsetMic sx={{ fontSize: 28, color: "#444" }} />, label: "Support Policy", path: "/support-policy" },
-          { icon: <Security sx={{ fontSize: 28, color: "#444" }} />, label: "Privacy Policy", path: "/privacy" },
+          { icon: <Description sx={{ fontSize: 28, color: "#444" }} />, label: "Terms & Conditions", path: storePath("/terms") },
+          { icon: <Undo sx={{ fontSize: 28, color: "#444" }} />, label: "Return Policy", path: storePath("/terms") },
+          { icon: <HeadsetMic sx={{ fontSize: 28, color: "#444" }} />, label: "Support Policy", path: storePath("/contact") },
+          { icon: <Security sx={{ fontSize: 28, color: "#444" }} />, label: "Privacy Policy", path: storePath("/privacy") },
         ].map((item, idx, arr) => (
           <Box
             key={item.label}
@@ -123,7 +125,7 @@ const BottomBar = () => {
         <Box sx={{ minWidth: 220 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.2, minWidth: 220 }}>
             <IconButton
-              onClick={() => navigate("/")}
+              onClick={() => navigate(storePath("/"))}
               sx={{
                 width: 40,
                 height: 40,
@@ -146,7 +148,7 @@ const BottomBar = () => {
               )}
             </IconButton>
 
-            <Box onClick={() => navigate("/")} sx={{ cursor: "pointer", userSelect: "none", lineHeight: 1.05 }}>
+            <Box onClick={() => navigate(storePath("/"))} sx={{ cursor: "pointer", userSelect: "none", lineHeight: 1.05 }}>
               <Typography sx={{ fontWeight: 700, letterSpacing: "-0.02em", color: "#fff", fontSize: 18 }}>
                 {brand.name}
               </Typography>
@@ -235,13 +237,13 @@ const BottomBar = () => {
             <Link component="button" onClick={() => navigate("/ecom/login")} sx={linkStyle}>
               Login
             </Link>
-            <Link component="button" onClick={() => navigate("/orders")} sx={linkStyle}>
+            <Link component="button" onClick={() => navigate(storePath("/orders"))} sx={linkStyle}>
               Order History
             </Link>
-            <Link component="button" onClick={() => navigate("/wish")} sx={linkStyle}>
+            <Link component="button" onClick={() => navigate(storePath("/wish"))} sx={linkStyle}>
               My Wishlist
             </Link>
-            <Link component="button" onClick={() => navigate("/orders")} sx={linkStyle}>
+            <Link component="button" onClick={() => navigate(storePath("/orders"))} sx={linkStyle}>
               Track Order
             </Link>
           </Box>

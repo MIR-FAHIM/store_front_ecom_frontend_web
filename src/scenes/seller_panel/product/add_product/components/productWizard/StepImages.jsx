@@ -4,7 +4,7 @@ import { CloudUpload } from "@mui/icons-material";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
-import AllMedia from "../../../../../admin_panel/media/AllMedia";
+import SellerMediaLibrary, { resolveUploadUrl } from "../../../../media/SellerMediaLibrary";
 import { image_file_url } from "../../../../../../api/config";
 import {
   deleteProductImage,
@@ -129,6 +129,8 @@ function StepImages({ value = [], onChange, onPrimary, error = "", productId }) 
           file: null,
           media_id: it.id,
           filename: it.file_original_name || it.file_name,
+          file_name: it.file_name || "",
+          url: resolveUploadUrl(it),
           is_primary: value.length === 0 || !value.some((v) => v.is_primary),
         },
       ];
@@ -292,7 +294,14 @@ function StepImages({ value = [], onChange, onPrimary, error = "", productId }) 
       <Dialog open={mediaOpen} onClose={() => setMediaOpen(false)} fullWidth maxWidth="lg">
         <DialogTitle>Select media</DialogTitle>
         <DialogContent>
-          <AllMedia onSelect={(it) => { handleMediaSelect(it); setMediaOpen(false); }} single={false} />
+          <SellerMediaLibrary
+            picker
+            single={false}
+            accept="image/*"
+            title="Select product images"
+            onSelect={(it) => { handleMediaSelect(it); setMediaOpen(false); }}
+            onClose={() => setMediaOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </Box>

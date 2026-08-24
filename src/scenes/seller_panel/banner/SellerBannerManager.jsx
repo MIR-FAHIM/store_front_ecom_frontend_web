@@ -31,7 +31,7 @@ import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import { addBanner, getBanner } from "../../../api/controller/admin_controller/media/banner_controller";
 import { getAllShops } from "../../../api/controller/admin_controller/shop/shop_controller.jsx";
 import { image_file_url } from "../../../api/config";
-import AllMedia from "../../admin_panel/media/AllMedia";
+import SellerMediaLibrary from "../media/SellerMediaLibrary";
 
 const initialForm = {
   banner_name: "",
@@ -334,7 +334,14 @@ export default function SellerBannerManager() {
       <Dialog open={mediaOpen} onClose={() => setMediaOpen(false)} fullWidth maxWidth="lg">
         <DialogTitle>Select banner image</DialogTitle>
         <DialogContent>
-          <AllMedia endpoint="/api/files/list" onSelect={handleSelectMedia} single={true} />
+          <SellerMediaLibrary
+            picker
+            single
+            accept="image/*"
+            title="Select banner image"
+            onSelect={handleSelectMedia}
+            onClose={() => setMediaOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </Box>

@@ -37,6 +37,7 @@ import {
   CategoryOutlined,
   LocalOfferOutlined,
   CardMembershipOutlined,
+  DesignServicesOutlined,
 } from "@mui/icons-material";
 import defaultLogo from "../../../assets/logo/store_myzoo_white.png";
 import { ToggledContext } from "../../../App";
@@ -103,6 +104,11 @@ const NAV_GROUPS = [
         icon: <CardMembershipOutlined fontSize="small" />,
       },
       {
+        title: "Media Marketplace",
+        path: "/admin/media-marketplace",
+        icon: <DesignServicesOutlined fontSize="small" />,
+      },
+      {
         title: "Customers", key: "customer", icon: <PeopleAltOutlined fontSize="small" />,
         children: [
           { title: "Add Customer",  path: "/ecom/customer/add", icon: <PersonAddAltOutlined fontSize="small" /> },
@@ -139,6 +145,7 @@ const NAV_GROUPS = [
         children: [
           { title: "Add Banner", path: "/ecom/banner/add",  icon: <ImageOutlined      fontSize="small" /> },
           { title: "All Media",  path: "/ecom/media/all",   icon: <CollectionsOutlined fontSize="small" /> },
+          { title: "Media Marketplace", path: "/admin/media-marketplace", icon: <DesignServicesOutlined fontSize="small" /> },
         ],
       },
       {

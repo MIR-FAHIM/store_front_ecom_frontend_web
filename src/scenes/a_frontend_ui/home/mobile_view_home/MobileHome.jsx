@@ -12,6 +12,7 @@ import MobileFeaturedSection from "./MobileFeaturedSection";
 import MobilePromoBanner from "./MobilePromoBanner";
 import MobileShopStrip from "./MobileShopStrip";
 import MobileProductGrid from "./MobileProductGrid";
+import { storeProductsPath } from "../../../../utils/productRoute";
 
 const safeArray = (x) => (Array.isArray(x) ? x : []);
 
@@ -127,7 +128,7 @@ export default function MobileHome({ storeParams = {}, isStorefront = false }) {
         >
           <MobileProductGrid
             title="All Products"
-            seeAllPath={storeParams.store_slug ? `/store/${encodeURIComponent(String(storeParams.store_slug))}/all-products` : "/all-products"}
+            seeAllPath={storeProductsPath(storeParams.store_slug)}
             storeParams={storeParams}
           />
         </Box>

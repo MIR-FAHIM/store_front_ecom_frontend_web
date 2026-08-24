@@ -26,6 +26,10 @@ import {
   WorkspacePremiumOutlined,
   ImageOutlined,
   CategoryOutlined,
+  LibraryBooksOutlined,
+  DesignServicesOutlined,
+  CollectionsOutlined,
+  QrCode2Outlined,
 } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getUserDetail } from "../../../api/controller/admin_controller/user_controller";
@@ -52,7 +56,12 @@ const navGroups = [
     items: [
       { label: "POS", icon: <PointOfSaleOutlined />, path: "/seller/pos" },
       { label: "Shops", icon: <StorefrontOutlined />, path: "/seller/shops" },
+      { label: "Store Products", icon: <Inventory2Outlined />, path: "/seller/products" },
+      { label: "Product Catalog", icon: <LibraryBooksOutlined />, path: "/seller/catalog" },
+      { label: "Creative Marketplace", icon: <DesignServicesOutlined />, path: "/seller/media-marketplace" },
+      { label: "Media Library", icon: <CollectionsOutlined />, path: "/seller/media-library" },
       { label: "Banners", icon: <ImageOutlined />, path: "/seller/banners" },
+      { label: "Store QR", icon: <QrCode2Outlined />, path: "/seller/store-qr" },
       { label: "Categories", icon: <CategoryOutlined />, path: "/seller/categories" },
       { label: "Orders", icon: <ShoppingCartOutlined />, path: "/seller/orders" },
       { label: "Packages", icon: <WorkspacePremiumOutlined />, path: "/seller/packages" },
@@ -103,7 +112,12 @@ const SideBar = ({ mobileOpen = false, onMobileClose }) => {
   };
 
   const renderItem = (item) => {
-    const active = location.pathname === item.path;
+    const active = location.pathname === item.path ||
+      (item.path === "/seller/products" && location.pathname.includes("/products")) ||
+      (item.path === "/seller/catalog" && location.pathname.includes("/catalog")) ||
+      (item.path === "/seller/media-marketplace" && location.pathname.includes("/media-marketplace")) ||
+      (item.path === "/seller/media-library" && location.pathname.includes("/media-library")) ||
+      (item.path === "/seller/store-qr" && location.pathname.includes("/store-qr"));
     return (
       <ListItemButton
         key={item.label}

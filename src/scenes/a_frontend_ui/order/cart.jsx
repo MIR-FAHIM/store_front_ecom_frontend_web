@@ -31,10 +31,12 @@ import { image_file_url } from "../../../api/config";
 import { useNavigate } from "react-router-dom";
 import { tokens } from "../../../theme";
 import { productDetailPath } from "../../../utils/productRoute";
+import { useStorefront } from "../../../context/StorefrontContext";
 
 const Cart = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { currentStoreSlug, storePath, storeParams } = useStorefront();
 
   const colors = tokens(theme.palette.mode);
   const divider = theme.palette.divider || colors.primary[200];
@@ -73,6 +75,8 @@ const Cart = () => {
 
   const loadCart = async () => {
     if (!userId) {
+      sessionStorage.setItem("auth_redirect", `${window.location.pathname}${window.location.search}`);
+      navigate("/login");
       setCart(null);
       localStorage.setItem("cart", JSON.stringify(0));
       window.dispatchEvent(new Event("cart-updated"));
@@ -81,7 +85,7 @@ const Cart = () => {
 
     setLoading(true);
     try {
-      const res = await getCartByUser(userId);
+      const res = await getCartByUser(userId, storeParams);
       if (res?.status === "success") {
         setCart(res.data);
         syncCartBadge(res.data);
@@ -105,7 +109,7 @@ const Cart = () => {
 
     setProcessing((prev) => ({ ...prev, [item.id]: true }));
     try {
-      const res = await updateQuantity(item.id, newQty);
+      const res = await updateQuantity(item.id, newQty, storeParams);
       if (res?.status === "success") {
         setMsg(res.message || "Updated quantity");
         await loadCart();
@@ -268,7 +272,7 @@ const Cart = () => {
                 "&:hover": { opacity: 0.92, boxShadow: "none" },
               }}
               variant="contained"
-              onClick={() => navigate("/")}
+              onClick={() => navigate(storePath("/"))}
             >
               Continue Shopping
             </Button>
@@ -314,7 +318,7 @@ const Cart = () => {
                             variant="square"
                             src={getPrimaryImage(it.product)}
                             sx={{ width: "100%", height: "100%" }}
-                            onClick={() => navigate(productDetailPath(it.product))}
+                            onClick={() => navigate(productDetailPath(it.product, currentStoreSlug))}
                           />
                         </Box>
                       </ListItemAvatar>
@@ -523,7 +527,7 @@ const Cart = () => {
 
                 <Button
                   variant="contained"
-                  onClick={() => navigate("/checkout")}
+                  onClick={() => navigate(storePath("/checkout"))}
                   startIcon={<LockCheckoutIcon />}
                   sx={{
                     borderRadius: 1,

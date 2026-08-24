@@ -29,6 +29,7 @@ import { addCart, getCartByUser } from "../../../../api/controller/admin_control
 import { getUserWish, addWish, deleteWish } from "../../../../api/controller/admin_controller/wishlist/wish_controller.jsx";
 import { useNavigate } from "react-router-dom";
 import { productDetailPath } from "../../../../utils/productRoute";
+import { useStorefront } from "../../../../context/StorefrontContext";
 
 const safeArray = (x) => (Array.isArray(x) ? x : []);
 
@@ -54,6 +55,19 @@ const writeJson = (key, value) => {
   } catch {
     // ignore
   }
+};
+
+const resolveCartProductPayload = (product, storeSlug = "") => {
+  const productId = product?.product_id ?? product?.product?.id ?? product?.id;
+  const storeProductId = product?.store_product_id ?? product?.store_product?.id ?? (product?.product_id ? product?.id : null);
+  const storeId = product?.store_id || product?.store?.id || product?.shop?.store_id;
+
+  return {
+    product_id: productId,
+    ...(storeProductId ? { store_product_id: storeProductId } : {}),
+    ...(storeSlug ? { store_slug: storeSlug } : {}),
+    ...(storeSlug && storeId ? { store_id: storeId } : {}),
+  };
 };
 
 const syncWishlist = async (userId) => {
@@ -89,7 +103,7 @@ const syncWishlist = async (userId) => {
   return wishSyncPromise;
 };
 
-const syncCart = async (userId, force = false) => {
+const syncCart = async (userId, force = false, params = {}) => {
   if (!userId) return;
   const now = Date.now();
   if (!force && now - lastCartSync < SYNC_TTL) return;
@@ -97,7 +111,7 @@ const syncCart = async (userId, force = false) => {
 
   lastCartSync = now;
   cartSyncPromise = (async () => {
-    const res = await getCartByUser(userId);
+    const res = await getCartByUser(userId, params);
     const items = res?.data?.items ?? res?.data?.data?.items ?? res?.data?.data ?? res?.data ?? [];
     const arr = safeArray(items);
     const ids = arr
@@ -133,6 +147,8 @@ export default function SmartProductCard({
 }) {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { currentStoreSlug, storeParams } = useStorefront();
+  const activeStoreSlug = storeSlug || currentStoreSlug;
 
   const [userId, setUserId] = useState(() => {
     if (!syncUserState) return null;
@@ -151,7 +167,7 @@ export default function SmartProductCard({
   const subInk = colors.gray[300];
 
   const accent = theme.palette.mode === "dark" ? colors.blueAccent[400] : colors.blueAccent[100];
-  const detailHref = useMemo(() => productDetailPath(product, storeSlug), [product, storeSlug]);
+  const detailHref = useMemo(() => productDetailPath(product, activeStoreSlug), [product, activeStoreSlug]);
 
   const money = (n) =>
     new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT" }).format(Number(n || 0));
@@ -308,8 +324,8 @@ export default function SmartProductCard({
     if (!syncUserState) return;
     if (!userId) return;
     syncWishlist(userId).catch(() => null);
-    syncCart(userId).catch(() => null);
-  }, [syncUserState, userId]);
+    syncCart(userId, false, storeParams).catch(() => null);
+  }, [storeParams, syncUserState, userId]);
 
   const handleToggleWish = useCallback(async (e) => {
     e.stopPropagation();
@@ -363,7 +379,7 @@ export default function SmartProductCard({
 
   const handleAddToCart = useCallback(async (e) => {
     e.stopPropagation();
-    const pid = product?.id;
+    const pid = product?.product_id ?? product?.product?.id ?? product?.id;
     if (!pid) return;
     if (onAddToCart) {
       try {
@@ -374,12 +390,17 @@ export default function SmartProductCard({
       return;
     }
     if (!userId) {
-      alert("Please login to add to cart.");
+      sessionStorage.setItem("auth_redirect", `${window.location.pathname}${window.location.search}`);
+      navigate("/login");
       return;
     }
 
     try {
-      const res = await addCart({ user_id: userId, product_id: pid, qty: 1 });
+      const res = await addCart({
+        user_id: userId,
+        qty: 1,
+        ...resolveCartProductPayload(product, activeStoreSlug),
+      });
       if (res?.status === "success") {
         const current = readJson("cartItems", []);
         const next = Array.isArray(current) ? [...current, pid] : [pid];
@@ -388,7 +409,7 @@ export default function SmartProductCard({
         writeJson("cart", unique.length);
         setInCart(true);
         window.dispatchEvent(new Event("cart-updated"));
-        await syncCart(userId, true);
+        await syncCart(userId, true, activeStoreSlug ? { store_slug: activeStoreSlug } : {});
       } else {
         alert(res?.message || "Failed to add to cart");
       }
@@ -396,7 +417,7 @@ export default function SmartProductCard({
       console.error("add to cart error:", err);
       alert("Error adding to cart");
     }
-  }, [onAddToCart, product, product?.id, userId]);
+  }, [activeStoreSlug, onAddToCart, product, product?.id, userId]);
 
   const handleCardLinkClick = useCallback((e) => {
     if (!detailHref) return;
@@ -619,7 +640,7 @@ export default function SmartProductCard({
                 <Link
                   component="button"
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); navigate(storeSlug ? `/store/${encodeURIComponent(String(storeSlug))}` : `/shop/${product.shop.id}`); }}
+                  onClick={(e) => { e.stopPropagation(); navigate(activeStoreSlug ? `/store/${encodeURIComponent(String(activeStoreSlug))}` : `/shop/${product.shop.id}`); }}
                   sx={{ position: "relative", zIndex: 3, fontSize: 11, fontWeight: 700, color: accent, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
                 >
                   {product.shop?.shop_name || product.shop?.name || "View shop"}

@@ -3,6 +3,7 @@ import { Box, Container, Table, TableBody, TableCell, TableContainer, TableHead,
 import { getUserOrder } from '../../../api/controller/admin_controller/order/order_controller';
 import { useNavigate } from 'react-router-dom';
 import { tokens } from '../../../theme';
+import { useStorefront } from '../../../context/StorefrontContext';
 
 const UserOrder = () => {
   const theme = useTheme();
@@ -13,6 +14,7 @@ const UserOrder = () => {
   const ink = colors.gray[100];
   const subInk = colors.gray[300];
   const navigate = useNavigate();
+  const { storePath, storeParams } = useStorefront();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -28,7 +30,7 @@ const UserOrder = () => {
     }
     setLoading(true);
     try {
-      const res = await getUserOrder(userId, { page: p, per_page: perPage });
+      const res = await getUserOrder(userId, { page: p, per_page: perPage, ...storeParams });
       // res.data contains pagination object
       const pageData = res?.data ?? res;
       const list = pageData?.data ?? [];
@@ -104,7 +106,7 @@ const UserOrder = () => {
                         variant="outlined"
                         sx={{ minWidth: 64, fontSize: 12, fontWeight: 600, color: ink, borderColor: border, 
                            borderRadius: 1, textTransform: 'none' }}
-                        onClick={() => navigate(`/order/${o.id}`)}
+                        onClick={() => navigate(storePath(`/order/${o.id}`))}
                       >
                         View
                       </Button>

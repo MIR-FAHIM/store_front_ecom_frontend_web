@@ -23,7 +23,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { getBrandDetails } from "../../../api/controller/admin_controller/brand/brand_controller";
 import { getProductsByBrand } from "../../../api/controller/admin_controller/product/product_controller";
 import SmartProductCard from "../home/components/ProductCard";
-import { productDetailPath } from "../../../utils/productRoute";
+import { productDetailPath, storeHomePath, storeScopedPath } from "../../../utils/productRoute";
 
 const PER_PAGE = 20;
 const safeArray = (value) => (Array.isArray(value) ? value : []);
@@ -53,7 +53,7 @@ const normalizeBrand = (response) => {
 const BrandProductsPage = () => {
 	const theme = useTheme();
 	const navigate = useNavigate();
-	const { brandId } = useParams();
+	const { brandId, slug } = useParams();
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const pageParam = Number(searchParams.get("page") || 1);
@@ -91,6 +91,7 @@ const BrandProductsPage = () => {
 				page,
 				per_page: PER_PAGE,
 				search,
+				...(slug ? { store_slug: slug } : {}),
 			});
 
 			if (response?.status === "failed" || response?.status === "error") {
@@ -119,7 +120,7 @@ const BrandProductsPage = () => {
 		} finally {
 			setLoading(false);
 		}
-	}, [brandId]);
+	}, [brandId, slug]);
 
 	useEffect(() => {
 		loadBrand();
@@ -166,11 +167,11 @@ const BrandProductsPage = () => {
 			>
 				<Container maxWidth="xl">
 					<Breadcrumbs sx={{ mb: 2, "& .MuiBreadcrumbs-separator": { color: "rgba(255,255,255,0.5)" } }}>
-						<Link href="/" underline="hover" sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "rgba(255,255,255,0.7)", fontSize: 14 }}>
+						<Link href={storeHomePath(slug)} underline="hover" sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "rgba(255,255,255,0.7)", fontSize: 14 }}>
 							<HomeOutlinedIcon sx={{ fontSize: 16 }} />
 							Home
 						</Link>
-						<Link href="/brands" underline="hover" sx={{ color: "rgba(255,255,255,0.7)", fontSize: 14 }}>
+						<Link href={storeScopedPath("/brands", slug)} underline="hover" sx={{ color: "rgba(255,255,255,0.7)", fontSize: 14 }}>
 							Brands
 						</Link>
 						<Typography sx={{ color: "#fff", fontSize: 14, fontWeight: 600 }}>
@@ -264,7 +265,8 @@ const BrandProductsPage = () => {
 								<SmartProductCard
 									key={product.id}
 									product={product}
-									onView={() => navigate(productDetailPath(product))}
+									storeSlug={slug}
+									onView={() => navigate(productDetailPath(product, slug))}
 								/>
 							))}
 						</Box>

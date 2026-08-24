@@ -39,6 +39,7 @@ axiosInstance.interceptors.response.use(
 
       // ✅ Only redirect if the request opted in
       if (error.config?.redirectOnUnauth) {
+        sessionStorage.setItem("auth_redirect", `${window.location.pathname}${window.location.search}`);
         window.location.href = "/login";
       }
     }

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { getProduct } from "../../../../api/controller/admin_controller/product/product_controller";
 import FeaturedTitle from "./FeaturedTitle";
 import SmartProductCard from "./ProductCard";
-import { productDetailPath } from "../../../../utils/productRoute";
+import { productDetailPath, storeProductsPath } from "../../../../utils/productRoute";
 
 const safeArray = (x) => (Array.isArray(x) ? x : []);
 
@@ -60,7 +60,7 @@ const AllProduct = ({ categoryId = "", storeParams = {}, storeSlug = "" }) => {
 		if (value > 1) params.set("page", value);
 		if (query) params.set("search", query);
 		const qs = params.toString();
-		navigate(`${storeSlug ? `/store/${encodeURIComponent(String(storeSlug))}` : "/all-products"}${qs ? `?${qs}` : ""}`);
+		navigate(`${storeProductsPath(storeSlug)}${qs ? `?${qs}` : ""}`);
 	};
 
 	const list = useMemo(() => products, [products]);

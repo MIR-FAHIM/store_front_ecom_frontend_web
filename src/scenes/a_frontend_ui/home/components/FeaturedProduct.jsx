@@ -11,6 +11,7 @@ const safeArray = (x) => (Array.isArray(x) ? x : []);
 export default function FeaturedProduct({ onView, storeParams = {} }) {
 	const theme = useTheme();
 	const navigate = useNavigate();
+	const storeSlug = storeParams?.store_slug || "";
 	const upXl = useMediaQuery(theme.breakpoints.up("xl"));
 	const upLg = useMediaQuery(theme.breakpoints.up("lg"));
 	const upMd = useMediaQuery(theme.breakpoints.up("md"));
@@ -91,7 +92,7 @@ export default function FeaturedProduct({ onView, storeParams = {} }) {
 	};
 
 	const handleSeeAll = () => {
-		navigate("/featured-products");
+		navigate(storeSlug ? `/store/${encodeURIComponent(String(storeSlug))}/featured-products` : "/featured-products");
 	};
 
 	return (

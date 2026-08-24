@@ -41,10 +41,12 @@ import { getShippingCosts , getDivisions, getDistricts} from "../../../api/contr
 import { getCartByUser, updateQuantity, deleteItem } from "../../../api/controller/admin_controller/order/cart_controller";
 import { tokens } from "../../../theme";
 import UserAddress from "./UserAddress";
+import { useStorefront } from "../../../context/StorefrontContext";
 
 const ProceedOrder = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { currentStoreSlug, storePath, storeParams } = useStorefront();
 
   const colors = tokens(theme.palette.mode);
   const divider = theme.palette.divider || colors.primary[200];
@@ -185,6 +187,8 @@ const ProceedOrder = () => {
 
   const loadCart = async () => {
     if (!userId) {
+      sessionStorage.setItem("auth_redirect", `${window.location.pathname}${window.location.search}`);
+      navigate("/login");
       setCart(null);
       localStorage.setItem("cart", JSON.stringify(0));
       window.dispatchEvent(new Event("cart-updated"));
@@ -192,7 +196,7 @@ const ProceedOrder = () => {
     }
 
     try {
-      const res = await getCartByUser(userId);
+      const res = await getCartByUser(userId, storeParams);
       if (res?.status === "success") {
         setCart(res.data);
         syncCartBadge(res.data);
@@ -322,7 +326,7 @@ const ProceedOrder = () => {
     if (newQty < 1) return;
     setProcessing((prev) => ({ ...prev, [item.id]: true }));
     try {
-      const res = await updateQuantity(item.id, newQty);
+      const res = await updateQuantity(item.id, newQty, storeParams);
       if (res?.status === "success") {
         setMsg(res.message || "Updated quantity");
         await loadCart();
@@ -383,6 +387,8 @@ const ProceedOrder = () => {
 
   const handleCheckout = async () => {
     if (!userId) {
+      sessionStorage.setItem("auth_redirect", `${window.location.pathname}${window.location.search}`);
+      navigate("/login");
       setMsg("Please login to place an order.");
       return;
     }
@@ -403,6 +409,8 @@ const ProceedOrder = () => {
     setLoadingCheckout(true);
     try {
       const checkoutTotal = Number(cart.subtotal || 0) + Number(selectedShippingCost || 0);
+      const firstItem = Array.isArray(cart.items) ? cart.items[0] : null;
+      const storeId = cart?.store_id || firstItem?.store_id || firstItem?.product?.store_id || firstItem?.store?.id || firstItem?.product?.store?.id;
       const form = new FormData();
       form.append("user_id", userId);
       form.append("user_address_id", String(addrObj.id || selectedAddress));
@@ -420,6 +428,10 @@ const ProceedOrder = () => {
       form.append("payment_method", paymentMethod === "online" ? "online" : "cod");
       form.append("note", note || "");
       form.append("platform", "web");
+      if (currentStoreSlug) {
+        form.append("store_slug", currentStoreSlug);
+        if (storeId) form.append("store_id", String(storeId));
+      }
 
       if (paymentMethod === "online") {
         const orderRes = await checkOutOrder(form);
@@ -439,6 +451,8 @@ const ProceedOrder = () => {
         const paymentForm = new FormData();
         if (orderId) paymentForm.append("order_id", String(orderId));
         if (paymentGroupId) paymentForm.append("payment_group_id", String(paymentGroupId));
+        if (currentStoreSlug) paymentForm.append("store_slug", currentStoreSlug);
+        if (currentStoreSlug && storeId) paymentForm.append("store_id", String(storeId));
 
         const paymentRes = await initiateAamarPayPayment(paymentForm);
         const paymentOk =
@@ -454,6 +468,8 @@ const ProceedOrder = () => {
               orderId,
               paymentGroupId,
               amount: checkoutTotal,
+              storeSlug: currentStoreSlug || "",
+              storeId: storeId || "",
               transactionId:
                 paymentRes?.data?.merchant_transaction_id ||
                 paymentRes?.data?.data?.merchant_transaction_id ||
@@ -477,7 +493,7 @@ const ProceedOrder = () => {
         setMsg(res?.data?.message || "Order placed");
         localStorage.setItem("cart", JSON.stringify(0));
         window.dispatchEvent(new Event("cart-updated"));
-        setTimeout(() => navigate("/order-success"), 900);
+        setTimeout(() => navigate(storePath("/order-success")), 900);
       } else {
         setMsg(res?.data?.message || "Failed to place order");
       }

@@ -11,16 +11,19 @@ import SearchIcon from "@mui/icons-material/Search";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import { useNavigate } from "react-router-dom";
+import { useStorefront } from "../../../../context/StorefrontContext";
+import { searchPath } from "../../../../utils/productRoute";
 
 export default function MobileSearchBar() {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { currentStoreSlug, storePath } = useStorefront();
   const isDark = theme.palette.mode === "dark";
   const [query, setQuery] = useState("");
 
   const handleSearch = (e) => {
     if (e.key === "Enter" && query.trim()) {
-      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+      navigate(searchPath(query.trim(), currentStoreSlug));
     }
   };
 
@@ -69,10 +72,10 @@ export default function MobileSearchBar() {
           ),
         }}
       />
-      <IconButton size="small" onClick={() => navigate("/wish")} sx={{ color: "#fff" }}>
+      <IconButton size="small" onClick={() => navigate(storePath("/wish"))} sx={{ color: "#fff" }}>
         <FavoriteBorderIcon sx={{ fontSize: 22 }} />
       </IconButton>
-      <IconButton size="small" onClick={() => navigate("/cart")} sx={{ color: "#fff" }}>
+      <IconButton size="small" onClick={() => navigate(storePath("/cart"))} sx={{ color: "#fff" }}>
         <ShoppingCartOutlinedIcon sx={{ fontSize: 22 }} />
       </IconButton>
     </Box>

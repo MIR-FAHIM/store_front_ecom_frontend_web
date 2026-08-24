@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Box, Button, IconButton, Typography, Stack, Chip, useTheme } from "@mui/material";
+import { Box, Button, IconButton, Typography, Stack, Chip, ToggleButton, ToggleButtonGroup, useTheme } from "@mui/material";
 import MenuOutlined from "@mui/icons-material/MenuOutlined";
 import LaunchOutlinedIcon from "@mui/icons-material/LaunchOutlined";
+import LanguageOutlinedIcon from "@mui/icons-material/LanguageOutlined";
 import { Outlet } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import SideBar from "./SideBar";
 import brandLogo from "../../../assets/logo/store_myzoo_logo_blue.png";
 import { getAllShops } from "../../../api/controller/admin_controller/shop/shop_controller.jsx";
@@ -11,7 +13,9 @@ const SellerLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [stores, setStores] = useState([]);
   const theme = useTheme();
+  const { i18n } = useTranslation();
   const isDark = theme.palette.mode === "dark";
+  const activeLang = i18n.language?.startsWith("bn") ? "bn" : "en";
 
   useEffect(() => {
     const loadStores = async () => {
@@ -40,6 +44,12 @@ const SellerLayout = () => {
   const handleOpenPublicStore = () => {
     if (!publicStoreSlug) return;
     window.open(`/store/${encodeURIComponent(String(publicStoreSlug))}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleLanguageChange = (_event, nextLang) => {
+    if (!nextLang) return;
+    i18n.changeLanguage(nextLang);
+    localStorage.setItem("lang", nextLang);
   };
 
   return (
@@ -77,6 +87,59 @@ const SellerLayout = () => {
             </Stack>
           </Stack>
           <Stack direction="row" spacing={1} alignItems="center">
+            <IconButton
+              onClick={() => handleLanguageChange(null, activeLang === "bn" ? "en" : "bn")}
+              size="small"
+              aria-label="switch language"
+              sx={{
+                display: { xs: "inline-flex", sm: "none" },
+                bgcolor: "#07145f",
+                color: "#fff",
+                borderRadius: 2,
+                fontWeight: 900,
+                "&:hover": { bgcolor: "#0f2f88" },
+              }}
+            >
+              <Typography sx={{ fontSize: 11, fontWeight: 950 }}>{activeLang === "bn" ? "EN" : "BN"}</Typography>
+            </IconButton>
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={activeLang}
+              onChange={handleLanguageChange}
+              aria-label="seller language"
+              sx={{
+                display: { xs: "none", sm: "inline-flex" },
+                bgcolor: isDark ? "#1e2030" : "#f8fafc",
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 2,
+                overflow: "hidden",
+                "& .MuiToggleButton-root": {
+                  gap: 0.5,
+                  px: 1.1,
+                  py: 0.45,
+                  border: 0,
+                  borderRadius: "0 !important",
+                  fontSize: 11,
+                  fontWeight: 900,
+                  textTransform: "none",
+                  color: "text.secondary",
+                },
+                "& .Mui-selected": {
+                  bgcolor: "#07145f !important",
+                  color: "#fff !important",
+                },
+              }}
+            >
+              <ToggleButton value="en" aria-label="English language">
+                <LanguageOutlinedIcon sx={{ fontSize: 15 }} />
+                EN
+              </ToggleButton>
+              <ToggleButton value="bn" aria-label="Bangla language">
+                বাংলা
+              </ToggleButton>
+            </ToggleButtonGroup>
             <Button
               size="small"
               variant="outlined"

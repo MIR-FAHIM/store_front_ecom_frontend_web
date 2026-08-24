@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useStorefront } from "../../../context/StorefrontContext";
 import {
 	Box,
 	Button,
@@ -13,6 +14,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 const OrderSuccessPage = () => {
 	const navigate = useNavigate();
+	const { storePath } = useStorefront();
 
 	return (
 		<Box
@@ -106,7 +108,7 @@ const OrderSuccessPage = () => {
 								variant="contained"
 								size="large"
 								fullWidth
-								onClick={() => navigate("/orders")}
+								onClick={() => navigate(storePath("/orders"))}
 								sx={{
 									textTransform: "none",
 									fontWeight: 700,
@@ -122,7 +124,7 @@ const OrderSuccessPage = () => {
 								variant="outlined"
 								size="large"
 								fullWidth
-								onClick={() => navigate("/")}
+								onClick={() => navigate(storePath("/"))}
 								sx={{
 									textTransform: "none",
 									fontWeight: 700,

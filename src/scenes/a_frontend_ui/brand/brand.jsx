@@ -13,7 +13,7 @@ import {
 	useTheme,
 } from "@mui/material";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { tokens } from "../../../theme";
 import { image_file_url } from "../../../api/config/index.jsx";
 import { getBrand } from "../../../api/controller/admin_controller/product/setting_controller";
@@ -42,6 +42,7 @@ const buildImageUrl = (media) => {
 const Brand = () => {
 	const theme = useTheme();
 	const navigate = useNavigate();
+	const { slug } = useParams();
 	const colors = tokens(theme.palette.mode);
 
 	const [brands, setBrands] = useState([]);
@@ -55,7 +56,7 @@ const Brand = () => {
 		setLoading(true);
 		setError("");
 		try {
-			const res = await getBrand({ page: nextPage, per_page: perPage, status: "active" });
+			const res = await getBrand({ page: nextPage, per_page: perPage, status: "active", ...(slug ? { store_slug: slug } : {}) });
 			const payload = res?.data ?? res;
 			const data = payload?.data ?? payload;
 			const list = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
@@ -119,12 +120,12 @@ const Brand = () => {
 											<Box
 												role="button"
 												tabIndex={brand?.id ? 0 : -1}
-												onClick={() => brand?.id && navigate(`/brands/${brand.id}/products`)}
+												onClick={() => brand?.id && navigate(slug ? `/store/${encodeURIComponent(String(slug))}/brands/${brand.id}/products` : `/brands/${brand.id}/products`)}
 												onKeyDown={(event) => {
 													if (!brand?.id) return;
 													if (event.key === "Enter" || event.key === " ") {
 														event.preventDefault();
-														navigate(`/brands/${brand.id}/products`);
+														navigate(slug ? `/store/${encodeURIComponent(String(slug))}/brands/${brand.id}/products` : `/brands/${brand.id}/products`);
 													}
 												}}
 												sx={{
@@ -180,7 +181,7 @@ const Brand = () => {
 														startIcon={<Inventory2OutlinedIcon sx={{ fontSize: 15 }} />}
 														onClick={(event) => {
 															event.stopPropagation();
-															navigate(`/brands/${brand.id}/products`);
+															navigate(slug ? `/store/${encodeURIComponent(String(slug))}/brands/${brand.id}/products` : `/brands/${brand.id}/products`);
 														}}
 														disabled={!brand?.id}
 														sx={{ mt: 0.75, px: 0, minWidth: 0, fontSize: 11, fontWeight: 700 }}

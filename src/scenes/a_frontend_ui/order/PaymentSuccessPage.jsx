@@ -18,6 +18,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import { getStoreSubscription } from "../../../api/controller/admin_controller/subscription_package/subscription_package_controller";
+import { storeScopedPath } from "../../../utils/productRoute";
 
 const readStoredPayment = () => {
   try {
@@ -73,6 +74,13 @@ const PaymentSuccessPage = () => {
   );
   const paymentType = firstValue(params.get("payment_type"), payment.payment_type, storedSubscription.paymentType, storedPayment.paymentType);
   const storeId = firstValue(params.get("store_id"), payment.store_id, storedSubscription.storeId, storedPayment.storeId);
+  const storeSlug = firstValue(
+    params.get("store_slug"),
+    payment.store_slug,
+    order.store_slug,
+    storedPayment.storeSlug,
+    sessionStorage.getItem("active_store_slug")
+  );
   const storeSubscriptionId = firstValue(
     params.get("store_subscription_id"),
     payment.store_subscription_id,
@@ -98,6 +106,7 @@ const PaymentSuccessPage = () => {
 
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [subscription, setSubscription] = useState(null);
+  const scopedPath = (path) => storeScopedPath(path, storeSlug || "");
 
   useEffect(() => {
     if (isSubscriptionPayment) {
@@ -293,7 +302,7 @@ const PaymentSuccessPage = () => {
                     size="large"
                     fullWidth
                     startIcon={<ShoppingBagIcon />}
-                    onClick={() => navigate("/orders")}
+                    onClick={() => navigate(scopedPath("/orders"))}
                     sx={{
                       textTransform: "none",
                       fontWeight: 800,
@@ -311,7 +320,7 @@ const PaymentSuccessPage = () => {
                     size="large"
                     fullWidth
                     startIcon={<HomeIcon />}
-                    onClick={() => navigate("/")}
+                    onClick={() => navigate(scopedPath("/"))}
                     sx={{ textTransform: "none", fontWeight: 800, borderRadius: 2, py: 1.2 }}
                   >
                     Continue shopping

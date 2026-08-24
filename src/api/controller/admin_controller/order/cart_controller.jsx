@@ -2,9 +2,9 @@ import axiosInstance from '../../../axiosInstance.jsx'
 
 
 
-export const getCartByUser = async (id) => {
+export const getCartByUser = async (id, params = {}) => {
   try {
-    const response = await axiosInstance.get(`/api/carts/active/${id}`,  { redirectOnUnauth: false });
+    const response = await axiosInstance.get(`/api/carts/active/${id}`,  { params, redirectOnUnauth: false });
     return response.data;
   } catch (error) {
     console.error("Error fetching getCartByUser:", error);
@@ -29,10 +29,12 @@ export const deleteItem = async (id) => {
   }
 }
 
-export const updateQuantity = async (id, qty) => {
+export const updateQuantity = async (id, qty, params = {}) => {
   try {
     const response = await axiosInstance.put(`/api/carts/items/update/${id}?qty=${qty}`,
+      null,
       {
+        params,
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("authToken")}`, // Add the token in Authorization header
         },

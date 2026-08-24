@@ -63,6 +63,14 @@ const Login = () => {
     return "";
   };
 
+  const consumeAuthRedirect = () => {
+    const redirect = sessionStorage.getItem("auth_redirect");
+    sessionStorage.removeItem("auth_redirect");
+    if (redirect && String(redirect).startsWith("/")) return redirect;
+    const activeStoreSlug = sessionStorage.getItem("active_store_slug");
+    return activeStoreSlug ? `/store/${encodeURIComponent(String(activeStoreSlug))}` : "/";
+  };
+
   const isPhoneInput = (value) => /^\+?\d[\d\s-]*$/.test(value || "");
 
   const handleLogin = async (e) => {
@@ -105,8 +113,8 @@ const Login = () => {
             sessionStorage.setItem("authToken", token);
             sessionStorage.setItem("userId", userId);
           }
-          if (userType === "customer") {
-            navigate("/");
+          if (userType === "customer" || !userType) {
+            navigate(consumeAuthRedirect());
           } 
         }
       }
