@@ -26,7 +26,7 @@ import {
   Alert,
   CircularProgress,
 } from "@mui/material";
-import { Visibility, Edit, Delete, Refresh, Search } from "@mui/icons-material";
+import { Visibility, Edit, Delete, Refresh, Search, QrCode2Outlined } from "@mui/icons-material";
 import { deleteSeller, getAllShops } from "../../../api/controller/admin_controller/user_controller.jsx";
 import { tokens } from "../../../theme";
 
@@ -126,6 +126,7 @@ const AllSellers = () => {
 
   const handleViewProfile = (sellerId) => navigate(`/ecom/admin/seller/${sellerId}`);
   const handleEdit = (sellerId) => navigate(`/ecom/admin/seller/edit/${sellerId}`);
+  const handleStoreQr = (storeId) => navigate(`/ecom/admin/store-qr/${storeId}`);
 
   const handleDelete = async (seller) => {
     const sellerId = seller?.user?.id;
@@ -361,6 +362,17 @@ const AllSellers = () => {
                             sx={{ color: theme.palette.error.main }}
                           >
                             {deletingId === seller?.id ? <CircularProgress size={16} color="inherit" /> : <Delete fontSize="small" />}
+                          </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title="Store QR">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleStoreQr(seller?.id)}
+                            disabled={!seller?.id}
+                            sx={{ color: colors.tealAccent?.[500] || "#0f766e" }}
+                          >
+                            <QrCode2Outlined fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       </TableCell>

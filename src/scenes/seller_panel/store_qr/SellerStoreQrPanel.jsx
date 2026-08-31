@@ -22,7 +22,7 @@ import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import LaunchOutlinedIcon from "@mui/icons-material/LaunchOutlined";
 import QrCode2OutlinedIcon from "@mui/icons-material/QrCode2Outlined";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
-import { getAllShops } from "../../../api/controller/admin_controller/shop/shop_controller.jsx";
+import { getAllShops, getShopDetails } from "../../../api/controller/admin_controller/shop/shop_controller.jsx";
 import { createQrMatrix } from "../../../utils/qrCode";
 import logoBlue from "../../../assets/logo/store_myzoo_logo_blue.png";
 
@@ -30,6 +30,7 @@ const safeArray = (value) => (Array.isArray(value) ? value : []);
 
 const getStoreName = (store) => store?.shop_name || store?.name || store?.store_name || "MyZoo Store";
 const getStoreSlug = (store) => store?.slug || store?.shop_slug || store?.store_slug || "";
+const getSellerId = (store) => store?.user_id || store?.seller_id || store?.user?.id || store?.seller?.id || "";
 
 const drawRoundedRect = (ctx, x, y, width, height, radius) => {
   const r = Math.min(radius, width / 2, height / 2);
@@ -75,7 +76,7 @@ const drawQr = (ctx, matrix, x, y, size, dark = "#07145f", light = "#ffffff") =>
   });
 };
 
-const SellerStoreQrPanel = () => {
+const SellerStoreQrPanel = ({ storeId: storeIdProp = "" }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const [stores, setStores] = useState([]);
@@ -94,16 +95,25 @@ const SellerStoreQrPanel = () => {
   useEffect(() => {
     const loadStores = async () => {
       const userId = localStorage.getItem("userId");
-      if (!userId) return;
+      if (!storeIdProp && !userId) return;
       setLoading(true);
       setError("");
       try {
-        const response = await getAllShops({ user_id: userId, page: 1, per_page: 200 });
-        const payload = response?.data ?? response;
-        const list = safeArray(payload?.data ?? payload);
+        let list = [];
+        if (storeIdProp) {
+          const response = await getShopDetails(storeIdProp);
+          if (response?.status !== "success") throw new Error(response?.message || "Failed to load store.");
+          list = response?.data ? [response.data] : [];
+        } else {
+          const response = await getAllShops({ user_id: userId, page: 1, per_page: 200 });
+          const payload = response?.data ?? response;
+          list = safeArray(payload?.data ?? payload);
+        }
         setStores(list);
         const storedId = localStorage.getItem("storeId") || localStorage.getItem("shopId");
-        const selected = list.find((store) => String(store?.id) === String(storedId)) || list[0] || null;
+        const selected = storeIdProp
+          ? list[0]
+          : list.find((store) => String(store?.id) === String(storedId)) || list[0] || null;
         if (selected?.id) setSelectedStoreId(String(selected.id));
       } catch (err) {
         setStores([]);
@@ -114,7 +124,7 @@ const SellerStoreQrPanel = () => {
     };
 
     loadStores();
-  }, []);
+  }, [storeIdProp]);
 
   const selectedStore = useMemo(
     () => stores.find((store) => String(store?.id) === String(selectedStoreId)) || null,
@@ -129,14 +139,21 @@ const SellerStoreQrPanel = () => {
     return `${origin}/store/${encodeURIComponent(String(storeSlug))}`;
   }, [storeSlug]);
 
+  const qrPayload = useMemo(() => {
+    if (!storeIdProp) return storeUrl;
+    const sellerId = getSellerId(selectedStore);
+    if (!sellerId || !storeSlug) return "";
+    return JSON.stringify({ seller_id: Number(sellerId), store_slug: String(storeSlug) }, null, 2);
+  }, [selectedStore, storeIdProp, storeSlug, storeUrl]);
+
   const qrResult = useMemo(() => {
-    if (!storeUrl) return { matrix: null, error: "" };
+    if (!qrPayload) return { matrix: null, error: "" };
     try {
-      return { matrix: createQrMatrix(storeUrl), error: "" };
+      return { matrix: createQrMatrix(qrPayload), error: "" };
     } catch (err) {
       return { matrix: null, error: err?.message || "Could not generate QR code." };
     }
-  }, [storeUrl]);
+  }, [qrPayload]);
   const qrMatrix = qrResult.matrix;
 
   const handleCopy = async () => {
@@ -225,7 +242,7 @@ const SellerStoreQrPanel = () => {
             Create a framed QR poster customers can scan to open your storefront.
           </Typography>
         </Box>
-        <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 280 } }}>
+        {!storeIdProp && <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 280 } }}>
           <InputLabel>Store</InputLabel>
           <Select label="Store" value={selectedStoreId} onChange={(e) => setSelectedStoreId(String(e.target.value))} disabled={loading || stores.length === 0}>
             {stores.map((store) => (
@@ -234,7 +251,7 @@ const SellerStoreQrPanel = () => {
               </MenuItem>
             ))}
           </Select>
-        </FormControl>
+        </FormControl>}
       </Stack>
 
       {error || qrResult.error ? <Alert severity="warning" sx={{ mb: 2 }}>{error || qrResult.error}</Alert> : null}

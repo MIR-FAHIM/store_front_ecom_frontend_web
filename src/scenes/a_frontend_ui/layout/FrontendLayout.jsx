@@ -9,8 +9,9 @@ const FrontendLayout = () => {
   const theme = useTheme();
   const { pathname } = useLocation();
   const isStorefront = /^\/store\/[^/]+/.test(pathname);
+  const isPolicyPage = /^\/(privacy|terms|return-policy|support-policy)$/.test(pathname);
 
-  if (!isStorefront) return <Outlet />;
+  if (!isStorefront && !isPolicyPage) return <Outlet />;
 
   return (
     <StorefrontProvider>
@@ -20,7 +21,7 @@ const FrontendLayout = () => {
         flexDirection: 'column',
         background: theme.palette.background.default,
       }}>
-        <Topbar />
+        {isStorefront ? <Topbar /> : null}
         <Container sx={{
           flex: 1,
           minHeight: '70vh',

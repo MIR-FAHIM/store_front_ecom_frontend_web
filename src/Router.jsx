@@ -34,6 +34,7 @@ import CompletedOrders from "./scenes/admin_panel/order/CompletedOrders";
 import OrderReport from "./scenes/admin_panel/order/OrderReport";
 import AddSeller from "./scenes/admin_panel/seller/AddSeller";
 import AllSellers from "./scenes/admin_panel/seller/AllSellers";
+import AdminStoreQrPanel from "./scenes/admin_panel/seller/AdminStoreQrPanel";
 import AddCustomer from "./scenes/admin_panel/customer/AddCustomer";
 import AllCustomers from "./scenes/admin_panel/customer/AllCustomers";
 import TodayReport from "./scenes/admin_panel/report/TodayReport";
@@ -72,6 +73,8 @@ import FrontendLayout from "./scenes/a_frontend_ui/layout/FrontendLayout";
 import CategoryWiseProductHome from "./scenes/a_frontend_ui/home/components/category_wise_product_home";
 import Privacy from "./scenes/a_frontend_ui/pages/Privacy";
 import Terms from "./scenes/a_frontend_ui/pages/Terms";
+import ReturnPolicy from "./scenes/a_frontend_ui/pages/ReturnPolicy";
+import SupportPolicy from "./scenes/a_frontend_ui/pages/SupportPolicy";
 import About from "./scenes/a_frontend_ui/pages/About";
 import Contact from "./scenes/a_frontend_ui/pages/Contact";
 import DateInvitation from "./scenes/a_frontend_ui/pages/DateInvitation";
@@ -127,6 +130,7 @@ import SellerMediaLibrary from "./scenes/seller_panel/media/SellerMediaLibrary";
 import AdminMediaMarketplace from "./scenes/admin_panel/media_marketplace/AdminMediaMarketplace";
 import { storeScopedPath } from "./utils/productRoute";
 import SellerStoreQrPanel from "./scenes/seller_panel/store_qr/SellerStoreQrPanel";
+import SellerCustomers from "./scenes/seller_panel/customers/SellerCustomers";
 
 
 
@@ -212,10 +216,14 @@ const AppRouter = () => {
             <Route path="payments/aamarpay/success" element={<StorefrontRedirect path="/payment-success" />} />
             <Route path="payments/aamarpay/fail" element={<StorefrontRedirect path="/payment-failed" />} />
             <Route path="payments/aamarpay/cancel" element={<StorefrontRedirect path="/payment-cancelled" />} />
-            <Route path="privacy" element={<StorefrontRedirect />} />
+            <Route path="privacy" element={<Privacy />} />
             <Route path="store/:slug/privacy" element={<Privacy />} />
-            <Route path="terms" element={<StorefrontRedirect />} />
+            <Route path="terms" element={<Terms />} />
             <Route path="store/:slug/terms" element={<Terms />} />
+            <Route path="return-policy" element={<ReturnPolicy />} />
+            <Route path="store/:slug/return-policy" element={<ReturnPolicy />} />
+            <Route path="support-policy" element={<SupportPolicy />} />
+            <Route path="store/:slug/support-policy" element={<SupportPolicy />} />
             <Route path="blogs" element={<StorefrontRedirect />} />
             <Route path="store/:slug/blogs" element={<Blogs />} />
             <Route path="flash-sale" element={<StorefrontRedirect />} />
@@ -281,6 +289,7 @@ const AppRouter = () => {
           {/* Seller Routes */}
           <Route path="/ecom/seller/add" element={<AddSeller />} />
           <Route path="/ecom/seller/all" element={<AllSellers />} />
+          <Route path="/ecom/admin/store-qr/:storeId" element={<AdminStoreQrPanel />} />
           <Route path="/ecom/admin/seller/:id" element={<EditSellerTab />} />
           <Route path="/ecom/admin/seller/edit/:id" element={<EditSellerTab />} />
 
@@ -333,6 +342,7 @@ const AppRouter = () => {
             <Route path="packages" element={<MerchantPackages />} />
             <Route path="banners" element={<SellerBannerManager />} />
             <Route path="store-qr" element={<SellerStoreQrPanel />} />
+            <Route path="customers" element={<SellerCustomers />} />
             <Route path="categories" element={<SellerCategoryManagement />} />
             <Route path="stores/:storeId/categories" element={<SellerCategoryManagement />} />
             <Route path="media-marketplace" element={<MediaMarketplace />} />

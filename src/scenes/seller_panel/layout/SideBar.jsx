@@ -30,6 +30,7 @@ import {
   DesignServicesOutlined,
   CollectionsOutlined,
   QrCode2Outlined,
+  PeopleAltOutlined,
 } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getUserDetail } from "../../../api/controller/admin_controller/user_controller";
@@ -62,6 +63,7 @@ const navGroups = [
       { label: "Media Library", icon: <CollectionsOutlined />, path: "/seller/media-library" },
       { label: "Banners", icon: <ImageOutlined />, path: "/seller/banners" },
       { label: "Store QR", icon: <QrCode2Outlined />, path: "/seller/store-qr" },
+      { label: "Customers", icon: <PeopleAltOutlined />, path: "/seller/customers" },
       { label: "Categories", icon: <CategoryOutlined />, path: "/seller/categories" },
       { label: "Orders", icon: <ShoppingCartOutlined />, path: "/seller/orders" },
       { label: "Packages", icon: <WorkspacePremiumOutlined />, path: "/seller/packages" },
@@ -117,7 +119,8 @@ const SideBar = ({ mobileOpen = false, onMobileClose }) => {
       (item.path === "/seller/catalog" && location.pathname.includes("/catalog")) ||
       (item.path === "/seller/media-marketplace" && location.pathname.includes("/media-marketplace")) ||
       (item.path === "/seller/media-library" && location.pathname.includes("/media-library")) ||
-      (item.path === "/seller/store-qr" && location.pathname.includes("/store-qr"));
+      (item.path === "/seller/store-qr" && location.pathname.includes("/store-qr")) ||
+      (item.path === "/seller/customers" && location.pathname.includes("/customers"));
     return (
       <ListItemButton
         key={item.label}

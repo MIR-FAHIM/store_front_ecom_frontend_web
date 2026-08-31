@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Container, Grid, Paper, List, ListItemButton, ListItemText, Typography, Divider, Button } from '@mui/material';
+import { Box, Container, Grid, Paper, List, ListItemButton, ListItemText, Typography, Button, CircularProgress, Stack, Chip } from '@mui/material';
 import { getUserDetail } from '../../../api/controller/admin_controller/user_controller.jsx';
+import { getSellersByCustomer } from '../../../api/controller/customer_preference/customer_preference_controller.jsx';
 import { useNavigate } from 'react-router-dom';
 
 const MENU = [
@@ -9,10 +10,80 @@ const MENU = [
   { key: 'addresses', label: 'Addresses' },
   { key: 'reviews', label: 'Reviews' },
   { key: 'wishlist', label: 'Wish List' },
+  { key: 'preferred-stores', label: 'My Preferred Stores' },
   { key: 'support', label: 'Support Tickets' },
   { key: 'delete', label: 'Delete My Account' },
   { key: 'logout', label: 'Logout' },
 ];
+
+const normalizePreferenceRows = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.data)) return payload.data.data;
+  if (Array.isArray(payload?.data?.data?.data)) return payload.data.data.data;
+  return [];
+};
+
+const PreferredStoresPanel = () => {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      setLoading(true);
+      setError('');
+      const res = await getSellersByCustomer({ page: 1, per_page: 50 });
+      if (!mounted) return;
+      if (res?.status === 'error') {
+        setRows([]);
+        setError(res?.statusCode === 403 ? 'You do not have permission.' : res?.message || 'Failed to load preferred stores.');
+      } else {
+        setRows(normalizePreferenceRows(res));
+      }
+      setLoading(false);
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <Stack alignItems="center" sx={{ py: 5 }}>
+        <CircularProgress size={24} />
+      </Stack>
+    );
+  }
+
+  if (error) return <Typography color="error">{error}</Typography>;
+
+  if (!rows.length) {
+    return <Typography color="text.secondary">No preferred stores yet.</Typography>;
+  }
+
+  return (
+    <Stack spacing={1.5}>
+      {rows.map((row, index) => {
+        const seller = row?.seller || row?.seller_user || row?.user || row;
+        const store = row?.store || row?.shop || seller?.store || seller?.shop;
+        return (
+          <Paper key={row?.id || `${seller?.id || 'seller'}-${index}`} variant="outlined" sx={{ p: 1.5, borderRadius: 1 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={1}>
+              <Box>
+                <Typography sx={{ fontWeight: 800 }}>{store?.shop_name || store?.name || seller?.name || 'Preferred store'}</Typography>
+                <Typography variant="body2" color="text.secondary">{seller?.email || 'No email'} {seller?.phone ? `- ${seller.phone}` : ''}</Typography>
+              </Box>
+              <Chip size="small" label="Preferred" color="success" />
+            </Stack>
+          </Paper>
+        );
+      })}
+    </Stack>
+  );
+};
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -73,6 +144,8 @@ const Profile = () => {
         return <Typography>Your reviews will appear here.</Typography>;
       case 'wishlist':
         return <Typography>Your wish list items will appear here.</Typography>;
+      case 'preferred-stores':
+        return <PreferredStoresPanel />;
       case 'support':
         return <Typography>Open support tickets and create new ones here.</Typography>;
       case 'delete':

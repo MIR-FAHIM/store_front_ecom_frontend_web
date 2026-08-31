@@ -245,9 +245,7 @@ const MerchantPackages = () => {
                       <Grid container spacing={1}>
                         <Grid item xs={6}><Chip label={`${pkg.trial_days || 0} trial days`} sx={{ width: "100%" }} /></Grid>
                         <Grid item xs={6}><Chip label={formatLimit(pkg.max_products, "products")} sx={{ width: "100%" }} /></Grid>
-                        <Grid item xs={6}><Chip label={formatLimit(pkg.max_orders_per_month, "orders")} sx={{ width: "100%" }} /></Grid>
                         <Grid item xs={6}><Chip label={formatLimit(pkg.max_staff, "staff")} sx={{ width: "100%" }} /></Grid>
-                        <Grid item xs={6}><Chip label={formatLimit(pkg.max_branches, "branches")} sx={{ width: "100%" }} /></Grid>
                         <Grid item xs={6}><Chip label={`${pkg.commission_rate ?? 0}% commission`} sx={{ width: "100%" }} /></Grid>
                       </Grid>
                       <Stack spacing={1}>

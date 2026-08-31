@@ -98,9 +98,16 @@ const makeDataCodewords = (text) => {
 
 const gfMultiply = (x, y) => {
   let z = 0;
-  for (let i = 7; i >= 0; i -= 1) {
-    z = ((z << 1) ^ ((z >>> 7) * 0x11d)) & 0xff;
-    if (((y >>> i) & 1) !== 0) z ^= x;
+  let multiplicand = x;
+  let multiplier = y;
+
+  // Multiply in GF(256) for Reed-Solomon error correction.
+  for (let i = 0; i < 8; i += 1) {
+    if ((multiplier & 1) !== 0) z ^= multiplicand;
+    const carry = multiplicand & 0x80;
+    multiplicand = (multiplicand << 1) & 0xff;
+    if (carry !== 0) multiplicand ^= 0x1d;
+    multiplier >>>= 1;
   }
   return z;
 };
@@ -277,4 +284,3 @@ export const createQrMatrix = (text) => {
   drawFormatBits(bestMatrix, bestMask);
   return bestMatrix;
 };
-

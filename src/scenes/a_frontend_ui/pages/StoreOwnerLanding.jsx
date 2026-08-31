@@ -27,12 +27,18 @@ import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import SupportAgentOutlinedIcon from "@mui/icons-material/SupportAgentOutlined";
 import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
+import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
+import PaidOutlinedIcon from "@mui/icons-material/PaidOutlined";
+import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
+import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
+import AndroidIcon from "@mui/icons-material/Android";
+import PhoneIphoneOutlinedIcon from "@mui/icons-material/PhoneIphoneOutlined";
 import { getSubscriptionPackages } from "../../../api/controller/admin_controller/subscription_package/subscription_package_controller";
+import BottomBar from "../layout/BottomBar";
 import commissionBanner from "../../../assets/banner/new-web-banner--1.png";
 import storeOrderBanner from "../../../assets/banner/new-web-banner--2.png";
 import deliveryBanner from "../../../assets/banner/new-web-banner--3.png";
 import brandLogoBlue from "../../../assets/logo/store_myzoo_logo_blue.png";
-import brandLogoWhite from "../../../assets/logo/store_myzoo_white.png";
 
 const normalizePackages = (response) => {
   const payload = response?.data ?? response;
@@ -82,6 +88,24 @@ const copy = {
     ],
     previewTitle: "Your store page, product catalog, and seller dashboard work together.",
     previewItems: ["Store banner", "Active categories", "Store products only", "Fast checkout"],
+    statsLabel: "Platform statistics",
+    statsTitle: "Trusted by growing merchants across Bangladesh",
+    statsText: "Real commerce activity from sellers and customers using MyZoo to sell, discover, and order locally.",
+    platformStats: [
+      ["5000+", "Merchant orders", "Over 5k merchant orders processed"],
+      ["10000+", "Users in Bangladesh", "Customers and sellers used our platform"],
+      ["2M+", "Total order amount", "Combined order value handled by the platform"],
+      ["100K+", "Today's merchant sales", "Merchant sales activity today"],
+    ],
+    processLabel: "Step by step process",
+    processTitle: "Start selling from your own store in four simple steps",
+    processText: "A clear merchant journey from store setup to receiving orders from your storefront and marketplace discovery.",
+    storeProcess: [
+      ["Create your store profile", "Add store name, logo, banner, address, contact details, and business settings."],
+      ["Upload products or add from product marketplace gallery", "Create your own products or activate ready products from the marketplace catalog."],
+      ["Share your store link or QR with customers", "Promote your public store URL and QR code through shop counter, Facebook, WhatsApp, and campaigns."],
+      ["Receive orders from marketplace and storefront", "Manage incoming orders, pickup, delivery, and payment flow from one seller dashboard."],
+    ],
     stepsLabel: "How it works",
     stepsTitle: "From offline counter to online orders",
     stepsText: "A simple path for store owners who want online sales without managing a separate technical project.",
@@ -131,6 +155,13 @@ const copy = {
       ["Delivery support", "Show delivery, pickup, and fulfillment messages clearly."],
       ["Promotion ready", "Run campaigns with smart banners and package offers."],
     ],
+    appLabel: "Mobile apps",
+    appTitle: "Run your store and serve customers from mobile",
+    appText: "Download the customer app for shopping and the merchant app for store owners who manage orders on the go.",
+    appCards: [
+      ["Customer App", "Customers can browse stores, discover products, and place orders from the MyZoo customer app.", "Download Customer App"],
+      ["Merchant App", "Store owners can manage products, orders, customers, and sales activity from the merchant app.", "Download Merchant App"],
+    ],
     finalTitle: "Build your store today. Start selling from your own link.",
     finalText: "Pick a package, activate your merchant dashboard, and bring your local store online.",
     support: "Talk to support",
@@ -155,6 +186,24 @@ const copy = {
     ],
     previewTitle: "আপনার স্টোর পেজ, প্রোডাক্ট ক্যাটালগ এবং সেলার ড্যাশবোর্ড একসাথে কাজ করবে।",
     previewItems: ["স্টোর ব্যানার", "অ্যাকটিভ ক্যাটাগরি", "শুধু আপনার প্রোডাক্ট", "দ্রুত চেকআউট"],
+    statsLabel: "প্ল্যাটফর্ম পরিসংখ্যান",
+    statsTitle: "বাংলাদেশের গ্রোয়িং মার্চেন্টদের আস্থা",
+    statsText: "MyZoo ব্যবহার করে সেলার ও কাস্টমারদের লোকাল বিক্রি, ডিসকভারি এবং অর্ডারের বাস্তব কমার্স অ্যাক্টিভিটি।",
+    platformStats: [
+      ["৫০০০+", "মার্চেন্ট অর্ডার", "৫ হাজারের বেশি মার্চেন্ট অর্ডার প্রসেস হয়েছে"],
+      ["১০০০০+", "বাংলাদেশের ইউজার", "কাস্টমার ও সেলাররা আমাদের প্ল্যাটফর্ম ব্যবহার করেছেন"],
+      ["২M+", "মোট অর্ডার অ্যামাউন্ট", "প্ল্যাটফর্মে হ্যান্ডেল করা মোট অর্ডার ভ্যালু"],
+      ["১০০K+", "আজকের মার্চেন্ট সেলস", "আজকের মার্চেন্ট সেলস অ্যাক্টিভিটি"],
+    ],
+    processLabel: "ধাপে ধাপে প্রক্রিয়া",
+    processTitle: "চারটি সহজ ধাপে নিজের স্টোর থেকে বিক্রি শুরু করুন",
+    processText: "স্টোর সেটআপ থেকে স্টোরফ্রন্ট ও মার্কেটপ্লেস ডিসকভারির অর্ডার নেওয়া পর্যন্ত পরিষ্কার মার্চেন্ট জার্নি।",
+    storeProcess: [
+      ["আপনার স্টোর প্রোফাইল তৈরি করুন", "স্টোর নাম, লোগো, ব্যানার, ঠিকানা, কন্টাক্ট এবং বিজনেস সেটিংস যোগ করুন।"],
+      ["প্রোডাক্ট আপলোড করুন বা প্রোডাক্ট মার্কেটপ্লেস গ্যালারি থেকে যোগ করুন", "নিজের প্রোডাক্ট তৈরি করুন অথবা মার্কেটপ্লেস ক্যাটালগ থেকে রেডি প্রোডাক্ট অ্যাক্টিভ করুন।"],
+      ["স্টোর লিংক বা QR কাস্টমারের সাথে শেয়ার করুন", "পাবলিক স্টোর URL ও QR কোড দোকান, Facebook, WhatsApp এবং ক্যাম্পেইনে প্রমোট করুন।"],
+      ["মার্কেটপ্লেস এবং স্টোরফ্রন্ট থেকে অর্ডার নিন", "এক সেলার ড্যাশবোর্ড থেকে অর্ডার, পিকআপ, ডেলিভারি এবং পেমেন্ট ফ্লো ম্যানেজ করুন।"],
+    ],
     stepsLabel: "কিভাবে কাজ করে",
     stepsTitle: "অফলাইন কাউন্টার থেকে অনলাইন অর্ডার",
     stepsText: "যারা আলাদা টেকনিক্যাল প্রজেক্ট ছাড়াই অনলাইনে বিক্রি শুরু করতে চান, তাদের জন্য সহজ পথ।",
@@ -204,6 +253,13 @@ const copy = {
       ["ডেলিভারি সাপোর্ট", "ডেলিভারি, পিকআপ এবং ফুলফিলমেন্ট মেসেজ পরিষ্কারভাবে দেখান।"],
       ["প্রমোশন প্রস্তুত", "স্মার্ট ব্যানার এবং প্যাকেজ অফার দিয়ে ক্যাম্পেইন চালান।"],
     ],
+    appLabel: "মোবাইল অ্যাপ",
+    appTitle: "মোবাইল থেকেই স্টোর চালান এবং কাস্টমার সার্ভ করুন",
+    appText: "শপিংয়ের জন্য কাস্টমার অ্যাপ এবং চলতে চলতে অর্ডার ম্যানেজ করার জন্য মার্চেন্ট অ্যাপ ডাউনলোড করুন।",
+    appCards: [
+      ["কাস্টমার অ্যাপ", "কাস্টমাররা MyZoo কাস্টমার অ্যাপ থেকে স্টোর ব্রাউজ, প্রোডাক্ট ডিসকভার এবং অর্ডার করতে পারবেন।", "কাস্টমার অ্যাপ ডাউনলোড"],
+      ["মার্চেন্ট অ্যাপ", "স্টোর মালিকরা মার্চেন্ট অ্যাপ থেকে প্রোডাক্ট, অর্ডার, কাস্টমার এবং সেলস অ্যাক্টিভিটি ম্যানেজ করতে পারবেন।", "মার্চেন্ট অ্যাপ ডাউনলোড"],
+    ],
     finalTitle: "আজই আপনার স্টোর তৈরি করুন। নিজের লিংক থেকে বিক্রি শুরু করুন।",
     finalText: "প্যাকেজ বেছে নিন, মার্চেন্ট ড্যাশবোর্ড চালু করুন এবং লোকাল স্টোরকে অনলাইনে আনুন।",
     support: "সাপোর্টে কথা বলুন",
@@ -218,6 +274,13 @@ const featureIcons = [
   PaymentsOutlinedIcon,
   LocalShippingOutlinedIcon,
   QueryStatsOutlinedIcon,
+];
+
+const statIcons = [
+  ShoppingBagOutlinedIcon,
+  GroupsOutlinedIcon,
+  PaidOutlinedIcon,
+  TrendingUpOutlinedIcon,
 ];
 
 const featureCopy = {
@@ -457,6 +520,86 @@ const StoreOwnerLanding = () => {
         </Grid>
       </Container>
 
+      <Box component="section" sx={{ py: { xs: 7, md: 9 }, bgcolor: "#f8fafc" }}>
+        <Container maxWidth="xl">
+          <SectionTitle label={t.statsLabel} title={t.statsTitle} text={t.statsText} />
+          <Grid container spacing={2}>
+            {t.platformStats.map(([value, label, description], index) => {
+              const Icon = statIcons[index];
+              const accents = [
+                ["#eff6ff", "#2563eb"],
+                ["#ecfdf5", "#059669"],
+                ["#fff7ed", "#ea580c"],
+                ["#fef2f2", "#dc2626"],
+              ][index];
+              return (
+                <Grid item xs={12} sm={6} md={3} key={label}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      height: "100%",
+                      p: { xs: 2.2, md: 2.6 },
+                      borderRadius: 1,
+                      bgcolor: "#fff",
+                      border: "1px solid #e2e8f0",
+                      boxShadow: "0 16px 38px rgba(15,23,42,0.06)",
+                    }}
+                  >
+                    <Box sx={{ width: 48, height: 48, borderRadius: 1, display: "grid", placeItems: "center", bgcolor: accents[0], color: accents[1], mb: 2 }}>
+                      <Icon />
+                    </Box>
+                    <Typography sx={{ fontSize: { xs: 34, md: 42 }, fontWeight: 950, lineHeight: 1, color: "#111827", letterSpacing: 0 }}>
+                      {value}
+                    </Typography>
+                    <Typography sx={{ mt: 1, color: accents[1], fontWeight: 950, fontSize: 16 }}>
+                      {label}
+                    </Typography>
+                    <Typography sx={{ mt: 0.8, color: "#64748b", lineHeight: 1.6, fontWeight: 650 }}>
+                      {description}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </Container>
+      </Box>
+
+      <Box component="section" sx={{ py: { xs: 7, md: 10 }, bgcolor: "#fff" }}>
+        <Container maxWidth="xl">
+          <SectionTitle label={t.processLabel} title={t.processTitle} text={t.processText} />
+          <Grid container spacing={2}>
+            {t.storeProcess.map(([title, text], index) => (
+              <Grid item xs={12} md={3} key={title}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    height: "100%",
+                    p: 2.4,
+                    borderRadius: 1,
+                    border: "1px solid #e2e8f0",
+                    bgcolor: "#fff",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                >
+                  <Typography sx={{ color: "#2563eb", fontWeight: 950, fontSize: 38, lineHeight: 1 }}>
+                    {String(index + 1).padStart(2, "0")}
+                  </Typography>
+                  <Typography sx={{ mt: 1.5, fontWeight: 950, fontSize: 19, lineHeight: 1.25, color: "#111827" }}>
+                    {title}
+                  </Typography>
+                  <Typography sx={{ mt: 1, color: "#64748b", lineHeight: 1.65, fontWeight: 650 }}>
+                    {text}
+                  </Typography>
+                  <Box sx={{ position: "absolute", right: 16, bottom: 14, width: 34, height: 4, borderRadius: 999, bgcolor: index === 3 ? "#22c55e" : "#bfdbfe" }} />
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
       <Box component="section" sx={{ py: { xs: 7, md: 10 } }}>
         <Container maxWidth="xl">
           <SectionTitle label={t.stepsLabel} title={t.stepsTitle} text={t.stepsText} />
@@ -531,9 +674,7 @@ const StoreOwnerLanding = () => {
                         <Grid container spacing={1}>
                           <Grid item xs={6}><Chip label={`${pkg.trial_days || 0} ${t.trialDays}`} sx={{ width: "100%", fontWeight: 800 }} /></Grid>
                           <Grid item xs={6}><Chip label={formatLimit(pkg.max_products, t.products, t.unlimited)} sx={{ width: "100%", fontWeight: 800 }} /></Grid>
-                          <Grid item xs={6}><Chip label={formatLimit(pkg.max_orders_per_month, t.orders, t.unlimited)} sx={{ width: "100%", fontWeight: 800 }} /></Grid>
                           <Grid item xs={6}><Chip label={formatLimit(pkg.max_staff, t.staff, t.unlimited)} sx={{ width: "100%", fontWeight: 800 }} /></Grid>
-                          <Grid item xs={6}><Chip label={formatLimit(pkg.max_branches, t.branches, t.unlimited)} sx={{ width: "100%", fontWeight: 800 }} /></Grid>
                           <Grid item xs={6}><Chip label={`${pkg.commission_rate ?? 0}% ${t.commission}`} sx={{ width: "100%", fontWeight: 800 }} /></Grid>
                         </Grid>
                         {pkgFeatures.length ? (
@@ -627,6 +768,69 @@ const StoreOwnerLanding = () => {
         </Container>
       </Box>
 
+      <Box component="section" sx={{ py: { xs: 7, md: 10 }, bgcolor: "#f8fafc" }}>
+        <Container maxWidth="xl">
+          <SectionTitle label={t.appLabel} title={t.appTitle} text={t.appText} />
+          <Grid container spacing={2.5} justifyContent="center">
+            {[
+              {
+                copy: t.appCards[0],
+                href: "https://play.google.com/store/apps/details?id=com.myzoo.customer",
+                Icon: PhoneIphoneOutlinedIcon,
+                accent: "#2563eb",
+                bg: "#eff6ff",
+              },
+              {
+                copy: t.appCards[1],
+                href: "https://play.google.com/store/apps/details?id=com.myzoo.marchant",
+                Icon: StorefrontOutlinedIcon,
+                accent: "#059669",
+                bg: "#ecfdf5",
+              },
+            ].map(({ copy: [title, text, button], href, Icon, accent, bg }) => (
+              <Grid item xs={12} md={5} key={title}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    height: "100%",
+                    p: { xs: 2.4, md: 3 },
+                    borderRadius: 1,
+                    bgcolor: "#fff",
+                    border: "1px solid #e2e8f0",
+                    boxShadow: "0 18px 42px rgba(15,23,42,0.06)",
+                  }}
+                >
+                  <Stack direction="row" spacing={1.6} alignItems="flex-start">
+                    <Box sx={{ width: 54, height: 54, borderRadius: 1, display: "grid", placeItems: "center", bgcolor: bg, color: accent, flexShrink: 0 }}>
+                      <Icon sx={{ fontSize: 28 }} />
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography sx={{ fontWeight: 950, fontSize: { xs: 22, md: 26 }, color: "#111827", lineHeight: 1.12 }}>
+                        {title}
+                      </Typography>
+                      <Typography sx={{ color: "#64748b", mt: 1, lineHeight: 1.68, fontWeight: 650 }}>
+                        {text}
+                      </Typography>
+                      <Button
+                        component="a"
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        variant="contained"
+                        startIcon={<AndroidIcon />}
+                        sx={{ mt: 2, borderRadius: 1, py: 1.1, px: 2, textTransform: "none", fontWeight: 950, bgcolor: accent }}
+                      >
+                        {button}
+                      </Button>
+                    </Box>
+                  </Stack>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
       <Box component="section" sx={{ py: { xs: 7, md: 10 } }}>
         <Container maxWidth="xl">
           <Paper elevation={0} sx={{ p: { xs: 2.6, md: 4.5 }, borderRadius: 1.2, bgcolor: "#eff6ff", border: "1px solid #bfdbfe", backgroundImage: `linear-gradient(90deg, rgba(239,246,255,0.97), rgba(239,246,255,0.82)), url("${storeOrderBanner}")`, backgroundSize: "cover", backgroundPosition: "center" }}>
@@ -651,22 +855,7 @@ const StoreOwnerLanding = () => {
         </Container>
       </Box>
 
-      <Box component="footer" sx={{ bgcolor: "#111827", color: "#fff", py: { xs: 5, md: 6 } }}>
-        <Container maxWidth="xl">
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }} justifyContent="space-between">
-            <Box>
-              <Stack direction="row" spacing={1.2} alignItems="center">
-                <Box component="img" src={brandLogoWhite} alt="MyZoo Stores" sx={{ width: 96, height: 38, objectFit: "contain", display: "block" }} />
-                <Typography sx={{ fontWeight: 950, fontSize: 22 }}>MyZoo Stores</Typography>
-              </Stack>
-              <Typography sx={{ color: "rgba(255,255,255,0.68)", mt: 0.5 }}>{t.footerText}</Typography>
-            </Box>
-            <Button variant="contained" endIcon={<ArrowForwardIcon />} onClick={() => navigate("/seller-register")} sx={{ alignSelf: { xs: "flex-start", md: "center" }, borderRadius: 1, textTransform: "none", fontWeight: 950, bgcolor: "#22c55e", color: "#052e16" }}>
-              {t.trial}
-            </Button>
-          </Stack>
-        </Container>
-      </Box>
+      <BottomBar />
     </Box>
   );
 };

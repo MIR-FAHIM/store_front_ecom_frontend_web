@@ -81,8 +81,8 @@ const BottomBar = () => {
       >
         {[
           { icon: <Description sx={{ fontSize: 28, color: "#444" }} />, label: "Terms & Conditions", path: storePath("/terms") },
-          { icon: <Undo sx={{ fontSize: 28, color: "#444" }} />, label: "Return Policy", path: storePath("/terms") },
-          { icon: <HeadsetMic sx={{ fontSize: 28, color: "#444" }} />, label: "Support Policy", path: storePath("/contact") },
+          { icon: <Undo sx={{ fontSize: 28, color: "#444" }} />, label: "Return Policy", path: storePath("/return-policy") },
+          { icon: <HeadsetMic sx={{ fontSize: 28, color: "#444" }} />, label: "Support Policy", path: storePath("/support-policy") },
           { icon: <Security sx={{ fontSize: 28, color: "#444" }} />, label: "Privacy Policy", path: storePath("/privacy") },
         ].map((item, idx, arr) => (
           <Box
@@ -106,8 +106,8 @@ const BottomBar = () => {
             }}
           >
             {item.icon}
-            <Typography sx={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: 700, textAlign: "center" }}>
-              <span style={{ color: '#111' }}>{item.label}</span>
+            <Typography sx={{ color: "#111", fontSize: 13, fontWeight: 700, textAlign: "center" }}>
+              {item.label}
             </Typography>
           </Box>
         ))}

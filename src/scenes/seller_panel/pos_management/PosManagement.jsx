@@ -6,6 +6,10 @@ import {
   CardContent,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   IconButton,
   MenuItem,
@@ -19,6 +23,7 @@ import {
   Autocomplete,
   Button,
   Pagination,
+  Alert,
 } from "@mui/material";
 import {
   Add,
@@ -35,11 +40,12 @@ import { tokens } from "../../../theme";
 import { getProduct } from "../../../api/controller/admin_controller/product/product_controller.jsx";
 import { getCategory } from "../../../api/controller/admin_controller/product/setting_controller.jsx";
 import { getBrand } from "../../../api/controller/admin_controller/brand/brand_controller.jsx";
-import { getAllCustomers, registerEmployee } from "../../../api/controller/admin_controller/user_controller.jsx";
+import { getAllCustomers } from "../../../api/controller/admin_controller/user_controller.jsx";
 import { addCart, deleteItem, getCartByUser, updateQuantity } from "../../../api/controller/admin_controller/order/cart_controller.jsx";
 import { checkOutOrder, getOrderDetails } from "../../../api/controller/admin_controller/order/order_controller.jsx";
 import { getUserAddresses, addUserAddress } from "../../../api/controller/admin_controller/order/user_address_controller.jsx";
 import { getDivisions, getDistricts } from "../../../api/controller/admin_controller/delivery/delivery_controller.jsx";
+import { addCustomerPreference } from "../../../api/controller/customer_preference/customer_preference_controller.jsx";
 import SmartProductCard from "../../a_frontend_ui/home/components/ProductCard.jsx";
 
 const moneyBDT = (n) => new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT" }).format(Number(n || 0));
@@ -127,10 +133,16 @@ export default function PosManagementSeller() {
   const [serverCart, setServerCart] = useState(null);
   const [localCart, setLocalCart] = useState([]);
   const [msg, setMsg] = useState("");
+  const [customerPreferenceMsg, setCustomerPreferenceMsg] = useState("");
+  const [customerPreferenceSaving, setCustomerPreferenceSaving] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [isOutsideDhaka, setIsOutsideDhaka] = useState(0);
 
   const [walkIn, setWalkIn] = useState({ name: "", phone: "", email: "", address: "", note: "" });
+  const [createCustomerOpen, setCreateCustomerOpen] = useState(false);
+  const [createCustomerSaving, setCreateCustomerSaving] = useState(false);
+  const [createCustomerErrors, setCreateCustomerErrors] = useState({});
+  const [newPosCustomer, setNewPosCustomer] = useState({ name: "", phone: "", email: "", address: "", password: "" });
   const [shipping, setShipping] = useState({ address: "", zone: "" });
 
   const loadMeta = async () => {
@@ -267,6 +279,7 @@ export default function PosManagementSeller() {
   useEffect(() => {
     if (tab !== 0) return;
     const customerId = selectedCustomer?.id;
+    setCustomerPreferenceMsg("");
     setNewAddress((prev) => ({
       ...prev,
       name: selectedCustomer?.name || "",
@@ -274,6 +287,91 @@ export default function PosManagementSeller() {
     }));
     loadCustomerAddresses(customerId);
   }, [selectedCustomer?.id, tab]);
+
+  const handleAddSelectedCustomerPreference = async () => {
+    if (!selectedCustomer?.id || customerPreferenceSaving) return;
+    setCustomerPreferenceSaving(true);
+    setCustomerPreferenceMsg("");
+    const res = await addCustomerPreference(selectedCustomer.id);
+    setCustomerPreferenceSaving(false);
+
+    if (res?.status === "error") {
+      const message =
+        res?.statusCode === 403
+          ? "You do not have permission."
+          : res?.statusCode === 404
+            ? "Customer or seller not found."
+            : res?.message || "Could not add customer to your list.";
+      setCustomerPreferenceMsg(message);
+      setMsg(message);
+      return;
+    }
+
+    setCustomerPreferenceMsg("Added to customer list");
+  };
+
+  const createSellerCustomer = async (input) => {
+    const payload = {
+      name: (input.name || "").trim(),
+      phone: (input.phone || "").trim(),
+      email: (input.email || "").trim(),
+      address: (input.address || "").trim(),
+      password: input.password || "",
+    };
+
+    if (!payload.name && !payload.phone && !payload.email) {
+      return {
+        ok: false,
+        errors: { form: ["Add at least a name, phone, or email."] },
+        message: "Add at least a name, phone, or email.",
+      };
+    }
+
+    Object.keys(payload).forEach((key) => {
+      if (payload[key] === "") delete payload[key];
+    });
+
+    const res = await addCustomerPreference(payload);
+    if (res?.status === "error") {
+      const message =
+        res?.statusCode === 403
+          ? "You cannot add customer for another seller"
+          : res?.statusCode === 404
+            ? "Seller or customer not found"
+            : res?.statusCode === 500
+              ? "Something went wrong. Please try again."
+              : res?.message || "Failed to create customer";
+      return { ok: false, errors: res?.errors || { form: [message] }, message };
+    }
+
+    const customer = res?.data?.customer || res?.customer || res?.data?.user || res?.data;
+    if (!customer?.id) {
+      return { ok: false, errors: { form: ["Customer created, but the response did not include customer id."] }, message: "Customer id missing from response" };
+    }
+
+    setCustomers((prev) => mergeById(prev, [customer]));
+    setSelectedCustomer(customer);
+    setTab(0);
+    setCustomerPreferenceMsg("Added to customer list");
+    return { ok: true, customer, message: res?.message || "Customer added successfully" };
+  };
+
+  const handleCreatePosCustomer = async () => {
+    setCreateCustomerErrors({});
+    setCreateCustomerSaving(true);
+    const result = await createSellerCustomer(newPosCustomer);
+    setCreateCustomerSaving(false);
+
+    if (!result.ok) {
+      setCreateCustomerErrors(result.errors || {});
+      setMsg(result.message || "Failed to create customer");
+      return;
+    }
+
+    setCreateCustomerOpen(false);
+    setNewPosCustomer({ name: "", phone: "", email: "", address: "", password: "" });
+    setMsg("Customer added successfully");
+  };
 
   useEffect(() => {
     const loadDivisions = async () => {
@@ -468,34 +566,19 @@ export default function PosManagementSeller() {
       return null;
     }
 
-    const password = `POS-${Math.random().toString(36).slice(2, 10)}!`;
-    const email = walkIn.email || `${walkIn.phone}@walkin.local`;
+    const result = await createSellerCustomer({
+      name: walkIn.name,
+      phone: walkIn.phone,
+      email: walkIn.email,
+      address: walkIn.address,
+    });
 
-    const form = new FormData();
-    form.append("name", walkIn.name);
-    form.append("email", email);
-    form.append("password", password);
-    form.append("user_type", "customer");
-    form.append("phone", walkIn.phone);
-
-    const res = await registerEmployee(form);
-    const ok = res?.status === 200 || res?.status === "success" || res?.success === true;
-    if (!ok) {
-      setMsg(res?.message || "Failed to create walk-in customer");
+    if (!result.ok) {
+      setMsg(result.message || "Failed to create walk-in customer");
       return null;
     }
 
-    const refetch = await getAllCustomers({ page: 1, per_page: 200 });
-    const payload = refetch?.data ?? refetch;
-    const list = payload?.data?.data || normalizeList(payload);
-    const found = list.find((c) => String(c?.mobile || c?.phone || "") === String(walkIn.phone) || String(c?.email || "") === email);
-    if (found) {
-      setSelectedCustomer(found);
-      return found.id;
-    }
-
-    setMsg("Walk-in customer created, but could not locate ID");
-    return null;
+    return result.customer.id;
   };
 
   const handleCheckout = async () => {
@@ -902,10 +985,42 @@ export default function PosManagementSeller() {
                     />
                   )}
                 />
+                <Button
+                  variant="outlined"
+                  startIcon={<Add />}
+                  onClick={() => setCreateCustomerOpen(true)}
+                  sx={{ alignSelf: "flex-start", borderRadius: 1, textTransform: "none", fontWeight: 800 }}
+                >
+                  Create New Customer
+                </Button>
                 {selectedCustomer ? (
-                  <Typography variant="caption" color="text.secondary">
-                    {selectedCustomer?.email || "No email"}
-                  </Typography>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between">
+                    <Typography variant="caption" color="text.secondary">
+                      {selectedCustomer?.email || "No email"}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      {customerPreferenceMsg ? (
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: customerPreferenceMsg === "Added to customer list" ? "success.main" : "warning.main",
+                            fontWeight: 800,
+                          }}
+                        >
+                          {customerPreferenceMsg}
+                        </Typography>
+                      ) : null}
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={handleAddSelectedCustomerPreference}
+                        disabled={customerPreferenceSaving}
+                        sx={{ borderRadius: 1, textTransform: "none", fontWeight: 800 }}
+                      >
+                        {customerPreferenceSaving ? "Adding..." : "Add to My Customer List"}
+                      </Button>
+                    </Stack>
+                  </Stack>
                 ) : null}
               </Box>
             ) : (
@@ -1280,6 +1395,65 @@ export default function PosManagementSeller() {
           </CardContent>
         </Card>
       </Box>
+
+      <Dialog open={createCustomerOpen} onClose={() => setCreateCustomerOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Create New Customer</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.4} sx={{ mt: 1 }}>
+            {createCustomerErrors?.form ? <Alert severity="warning">{createCustomerErrors.form[0]}</Alert> : null}
+            <TextField
+              autoFocus
+              size="small"
+              label="Name"
+              value={newPosCustomer.name}
+              onChange={(e) => setNewPosCustomer((prev) => ({ ...prev, name: e.target.value }))}
+              error={Boolean(createCustomerErrors?.name)}
+              helperText={createCustomerErrors?.name?.[0] || "Recommended"}
+            />
+            <TextField
+              size="small"
+              label="Phone"
+              value={newPosCustomer.phone}
+              onChange={(e) => setNewPosCustomer((prev) => ({ ...prev, phone: e.target.value }))}
+              error={Boolean(createCustomerErrors?.phone)}
+              helperText={createCustomerErrors?.phone?.[0] || "Primary field for POS"}
+            />
+            <TextField
+              size="small"
+              label="Email"
+              value={newPosCustomer.email}
+              onChange={(e) => setNewPosCustomer((prev) => ({ ...prev, email: e.target.value }))}
+              error={Boolean(createCustomerErrors?.email)}
+              helperText={createCustomerErrors?.email?.[0] || "Optional"}
+            />
+            <TextField
+              size="small"
+              label="Address"
+              value={newPosCustomer.address}
+              onChange={(e) => setNewPosCustomer((prev) => ({ ...prev, address: e.target.value }))}
+              error={Boolean(createCustomerErrors?.address)}
+              helperText={createCustomerErrors?.address?.[0] || "Optional"}
+            />
+            <TextField
+              size="small"
+              type="password"
+              label="Password"
+              value={newPosCustomer.password}
+              onChange={(e) => setNewPosCustomer((prev) => ({ ...prev, password: e.target.value }))}
+              error={Boolean(createCustomerErrors?.password)}
+              helperText={createCustomerErrors?.password?.[0] || "Optional. Backend can create one if empty."}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setCreateCustomerOpen(false)} sx={{ textTransform: "none" }}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleCreatePosCustomer} disabled={createCustomerSaving} sx={{ textTransform: "none", fontWeight: 800 }}>
+            {createCustomerSaving ? "Creating..." : "Create Customer"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar open={!!msg} autoHideDuration={3000} onClose={() => setMsg("")} message={msg} />
     </Box>

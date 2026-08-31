@@ -7,18 +7,41 @@ import {
 	CardContent,
 	CircularProgress,
 	IconButton,
+	Alert,
+	Snackbar,
 	Stack,
 	Typography,
 	useTheme,
 } from "@mui/material";
-import { ChevronLeft, ChevronRight } from "@mui/icons-material";
+import { CheckCircleOutline, ChevronLeft, ChevronRight, FavoriteBorder } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
 import { tokens } from "../../../../theme";
 import { image_file_url } from "../../../../api/config/index.jsx";
 import { getAllShops } from "../../../../api/controller/admin_controller/shop/shop_controller.jsx";
+import {
+	addSellerPreference,
+	getSellersByCustomer,
+} from "../../../../api/controller/customer_preference/customer_preference_controller.jsx";
 
 const safeArray = (x) => (Array.isArray(x) ? x : []);
+
+const normalizePreferredSellerRows = (payload) => {
+	const rows =
+		Array.isArray(payload?.data?.data)
+			? payload.data.data
+			: Array.isArray(payload?.data)
+				? payload.data
+				: Array.isArray(payload)
+					? payload
+					: [];
+	return rows
+		.map((row) => {
+			const seller = row?.seller || row?.seller_user || row?.user || row;
+			return row?.seller_id || seller?.id || seller?.user_id;
+		})
+		.filter(Boolean);
+};
 
 const buildImageUrl = (file) => {
 	if (!file) return null;
@@ -44,12 +67,13 @@ const initialsFromName = (name) => {
 	return initials || "S";
 };
 
-const ShopCard = ({ shop, onView }) => {
+const ShopCard = ({ shop, onView, onPreference, isPreferred, preferenceSaving }) => {
 	const theme = useTheme();
 	const colors = tokens(theme.palette.mode);
 
 	const logoUrl = useMemo(() => buildImageUrl(shop?.logo), [shop?.logo]);
 	const bannerUrl = useMemo(() => buildImageUrl(shop?.banner), [shop?.banner]);
+	const sellerId = shop?.user_id;
 
 	return (
 		<Card
@@ -120,6 +144,22 @@ const ShopCard = ({ shop, onView }) => {
 						{String(shop.status).toUpperCase()}
 					</Typography>
 				) : null}
+				{sellerId ? (
+					<Button
+						fullWidth
+						size="small"
+						variant={isPreferred ? "contained" : "outlined"}
+						startIcon={isPreferred ? <CheckCircleOutline /> : <FavoriteBorder />}
+						disabled={isPreferred || preferenceSaving}
+						onClick={(event) => {
+							event.stopPropagation();
+							onPreference?.(shop);
+						}}
+						sx={{ mt: 1.25, borderRadius: 1, textTransform: "none", fontWeight: 800 }}
+					>
+						{preferenceSaving ? "Adding..." : isPreferred ? "Added to Preference" : "Add This Store to My Preference"}
+					</Button>
+				) : null}
 			</CardContent>
 		</Card>
 	);
@@ -134,6 +174,9 @@ const HomeShopList = () => {
 	const [loading, setLoading] = useState(false);
 	const [items, setItems] = useState([]);
 	const [error, setError] = useState("");
+	const [preferredSellerIds, setPreferredSellerIds] = useState(() => new Set());
+	const [savingSellerId, setSavingSellerId] = useState(null);
+	const [notice, setNotice] = useState({ open: false, severity: "success", message: "" });
 
 	useEffect(() => {
 		let mounted = true;
@@ -161,6 +204,24 @@ const HomeShopList = () => {
 		};
 	}, []);
 
+	useEffect(() => {
+		const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+		if (!token) return;
+
+		let mounted = true;
+		const loadPreferredStores = async () => {
+			const res = await getSellersByCustomer({ page: 1, per_page: 100 });
+			if (res?.status === "error") return;
+			const list = normalizePreferredSellerRows(res);
+			if (!mounted) return;
+			setPreferredSellerIds(new Set(list.map((id) => String(id)).filter(Boolean)));
+		};
+		loadPreferredStores();
+		return () => {
+			mounted = false;
+		};
+	}, []);
+
 	const handleScroll = (dir) => {
 		const el = rowRef.current;
 		if (!el) return;
@@ -173,8 +234,41 @@ const HomeShopList = () => {
 	};
 
 	const handleViewShop = (shop) => {
-		if (!shop?.id) return;
-		navigate(`/shop/${shop.id}`);
+		const slug = shop?.slug || shop?.store_slug || shop?.shop_slug;
+		if (!slug) return;
+		navigate(`/store/${slug}`);
+	};
+
+	const handleAddPreference = async (shop) => {
+		const sellerId = shop?.user_id;
+		if (!sellerId) return;
+
+		const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+		if (!token) {
+			sessionStorage.setItem("auth_redirect", `${window.location.pathname}${window.location.search}`);
+			navigate("/login");
+			return;
+		}
+
+		setSavingSellerId(sellerId);
+		const res = await addSellerPreference(sellerId);
+		setSavingSellerId(null);
+
+		if (res?.status === "error") {
+			const message =
+				res?.statusCode === 403
+					? "You do not have permission."
+					: res?.statusCode === 404
+						? "Customer or seller not found."
+						: res?.statusCode === 422
+							? "Please check this store preference request."
+							: res?.message || "Failed to add store preference.";
+			setNotice({ open: true, severity: "error", message });
+			return;
+		}
+
+		setPreferredSellerIds((prev) => new Set([...prev, String(sellerId)]));
+		setNotice({ open: true, severity: "success", message: res?.message || "Store added to preference" });
 	};
 
 	return (
@@ -226,11 +320,22 @@ const HomeShopList = () => {
 				>
 					{items.map((shop) => (
 						<Box key={shop?.id ?? Math.random()} sx={{ flex: "0 0 auto" }}>
-							<ShopCard shop={shop} onView={handleViewShop} />
+							<ShopCard
+								shop={shop}
+								onView={handleViewShop}
+								onPreference={handleAddPreference}
+								isPreferred={preferredSellerIds.has(String(shop?.user_id))}
+								preferenceSaving={String(savingSellerId) === String(shop?.user_id)}
+							/>
 						</Box>
 					))}
 				</Box>
 			)}
+			<Snackbar open={notice.open} autoHideDuration={3500} onClose={() => setNotice((prev) => ({ ...prev, open: false }))}>
+				<Alert severity={notice.severity} variant="filled" onClose={() => setNotice((prev) => ({ ...prev, open: false }))}>
+					{notice.message}
+				</Alert>
+			</Snackbar>
 		</Box>
 	);
 };
