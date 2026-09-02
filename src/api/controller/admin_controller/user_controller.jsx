@@ -27,7 +27,7 @@ export const registerEmployee = async (data) => {
 }
 export const registerSeller = async (data) => {
   try {
-    const response = await axiosInstance.post(`/api/users/create`, data, { skipAuth: true });
+    const response = await axiosInstance.post(`/api/users/create-seller`, data, { skipAuth: true });
     return response.data; // Return the response from the API
   } catch (error) {
     console.error("Error add Seller data:", error);
