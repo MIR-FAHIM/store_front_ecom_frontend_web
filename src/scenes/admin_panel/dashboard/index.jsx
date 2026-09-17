@@ -19,6 +19,9 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import CategoryIcon from "@mui/icons-material/Category";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import LanguageIcon from "@mui/icons-material/Language";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import TouchAppIcon from "@mui/icons-material/TouchApp";
 
 import { dashboardReport, getAdminMonthReport, getTodayReport } from "../../../api/controller/admin_controller/report/report_controller";
 import { getOrder } from "../../../api/controller/admin_controller/order/order_controller";
@@ -29,6 +32,7 @@ import SalesDonut from "./components/SalesDonut";
 import OrderStatusBoard from "./components/OrderStatusBoard";
 import RecentOrdersTable from "./components/RecentOrdersTable";
 import MiniBarChart from "./components/MiniBarChart";
+import OnlinePaymentMiniRow from "./components/OnlinePaymentMiniRow";
 
 const moneyBDT = (n) =>
   new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT", maximumFractionDigits: 0 }).format(Number(n || 0));
@@ -129,43 +133,73 @@ function Dashboard() {
             {/* ───── Row 1: Today Snapshot ───── */}
             {todayData && (
               <Grid container spacing={2}>
-                <Grid item xs={6} sm={3}>
+                <Grid item xs={6} sm={4} md={3} lg={1.71}>
                   <KpiCard
                     title="Today Orders"
-                    value={todayData?.total_orders ?? todayData?.total_orders ?? 0}
+                    value={todayData?.total_orders ?? 0}
                     icon={<ReceiptLongIcon />}
                     color="#6366f1"
                     bgColor="#eef2ff"
                     subtitle="today"
                   />
                 </Grid>
-                <Grid item xs={6} sm={3}>
+                <Grid item xs={6} sm={4} md={3} lg={1.71}>
                   <KpiCard
                     title="Today Revenue"
-                    value={moneyBDT(todayData?.today_sales ?? todayData?.total_sell ?? 0)}
+                    value={moneyBDT(todayData?.total_earn ?? todayData?.today_sales ?? todayData?.total_sell ?? 0)}
                     icon={<AttachMoneyIcon />}
                     color="#10b981"
                     bgColor="#ecfdf5"
                     subtitle="today"
                   />
                 </Grid>
-                <Grid item xs={6} sm={3}>
+                <Grid item xs={6} sm={4} md={3} lg={1.71}>
                   <KpiCard
-                    title="New Customers"
-                    value={todayData?.customer_onboard ?? todayData?.customer_onboard ?? 0}
-                    icon={<PeopleAltIcon />}
+                    title="Site Visitors"
+                    value={todayData?.website_visitors ?? 0}
+                    icon={<LanguageIcon />}
+                    color="#0ea5e9"
+                    bgColor="#e0f2fe"
+                    subtitle="today"
+                  />
+                </Grid>
+                <Grid item xs={6} sm={4} md={3} lg={1.71}>
+                  <KpiCard
+                    title="Product Clicks"
+                    value={todayData?.product_clicked ?? 0}
+                    icon={<TouchAppIcon />}
+                    color="#8b5cf6"
+                    bgColor="#f3e8ff"
+                    subtitle="today"
+                  />
+                </Grid>
+                <Grid item xs={6} sm={4} md={3} lg={1.71}>
+                  <KpiCard
+                    title="Cart Clicks"
+                    value={todayData?.cart_clicked ?? 0}
+                    icon={<ShoppingCartIcon />}
                     color="#f59e0b"
                     bgColor="#fffbeb"
                     subtitle="today"
                   />
                 </Grid>
-                <Grid item xs={6} sm={3}>
+                <Grid item xs={6} sm={4} md={3} lg={1.71}>
                   <KpiCard
-                    title="New Products"
-                    value={todayData?.new_products ?? todayData?.products_count ?? 0}
-                    icon={<Inventory2Icon />}
+                    title="New Customers"
+                    value={todayData?.customer_onboard ?? 0}
+                    icon={<PeopleAltIcon />}
                     color="#ec4899"
                     bgColor="#fdf2f8"
+                    subtitle="today"
+                  />
+                </Grid>
+                <Grid item xs={6} sm={4} md={3} lg={1.71}>
+                  <KpiCard
+                    title="New Sellers"
+                    value={todayData?.seller_onboard ?? 0}
+                    icon={<StorefrontIcon />}
+                    color="#14b8a6"
+                    bgColor="#ccfbf1"
                     subtitle="today"
                   />
                 </Grid>
@@ -227,6 +261,9 @@ function Dashboard() {
                 />
               </Grid>
             </Grid>
+
+            {/* ───── Online Payment Mini Full Row Section ───── */}
+            <OnlinePaymentMiniRow />
 
             {/* ───── Row 3: Charts ───── */}
             <Grid container spacing={2}>

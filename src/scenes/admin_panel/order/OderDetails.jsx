@@ -23,7 +23,10 @@ import {
   Avatar,
   IconButton,
   Tooltip,
+  Divider,
+  Paper,
 } from "@mui/material";
+
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
@@ -46,25 +49,32 @@ import PendingActionsOutlinedIcon from "@mui/icons-material/PendingActionsOutlin
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import jsPDF from "jspdf";
 import { appname } from "../../../api/config";
-import { getOrderDetails, updateOrderStatus, assignDeliveryBoy, unassignDeliveryBoy, getOrderStatusList } from "../../../api/controller/admin_controller/order/order_controller";
+import {
+  getOrderDetails,
+  updateOrderStatus,
+  assignDeliveryBoy,
+  unassignDeliveryBoy,
+  getOrderStatusList,
+} from "../../../api/controller/admin_controller/order/order_controller";
 import { getDeliveryMen } from "../../../api/controller/admin_controller/user_controller";
 
-/* ── Static style/icon lookup by normalised status name ── */
+/* ── Status style map ── */
 const ORDER_STATUS_STYLE_MAP = {
-  pending:            { color: "#f59e0b", bg: "#fffbeb", icon: <PendingActionsOutlinedIcon sx={{ fontSize: 14 }} /> },
-  confirmed:          { color: "#3b82f6", bg: "#eff6ff", icon: <CheckCircleOutlineIcon sx={{ fontSize: 14 }} /> },
-  processing:         { color: "#6366f1", bg: "#eef2ff", icon: <SettingsOutlinedIcon sx={{ fontSize: 14 }} /> },
-  packed:             { color: "#8b5cf6", bg: "#f5f3ff", icon: <SettingsOutlinedIcon sx={{ fontSize: 14 }} /> },
-  shipped:            { color: "#0ea5e9", bg: "#f0f9ff", icon: <LocalShippingOutlinedIcon sx={{ fontSize: 14 }} /> },
-  "out for delivery": { color: "#f97316", bg: "#fff7ed", icon: <LocalShippingOutlinedIcon sx={{ fontSize: 14 }} /> },
-  delivered:          { color: "#10b981", bg: "#ecfdf5", icon: <CheckCircleOutlineIcon sx={{ fontSize: 14 }} /> },
-  completed:          { color: "#059669", bg: "#d1fae5", icon: <CheckCircleOutlineIcon sx={{ fontSize: 14 }} /> },
-  cancelled:          { color: "#ef4444", bg: "#fef2f2", icon: <CancelOutlinedIcon sx={{ fontSize: 14 }} /> },
-  returned:           { color: "#f59e0b", bg: "#fffbeb", icon: <CancelOutlinedIcon sx={{ fontSize: 14 }} /> },
-  refunded:           { color: "#8b5cf6", bg: "#f5f3ff", icon: <PaymentOutlinedIcon sx={{ fontSize: 14 }} /> },
-  failed:             { color: "#dc2626", bg: "#fee2e2", icon: <CancelOutlinedIcon sx={{ fontSize: 14 }} /> },
+  pending:            { label: "Pending",           color: "#f59e0b", bg: "#fffbeb", icon: <PendingActionsOutlinedIcon sx={{ fontSize: 14 }} /> },
+  confirmed:          { label: "Confirmed",         color: "#3b82f6", bg: "#eff6ff", icon: <CheckCircleOutlineIcon sx={{ fontSize: 14 }} /> },
+  processing:         { label: "Processing",        color: "#6366f1", bg: "#eef2ff", icon: <SettingsOutlinedIcon sx={{ fontSize: 14 }} /> },
+  packed:             { label: "Packed",            color: "#8b5cf6", bg: "#f5f3ff", icon: <SettingsOutlinedIcon sx={{ fontSize: 14 }} /> },
+  shipped:            { label: "Shipped",           color: "#0ea5e9", bg: "#f0f9ff", icon: <LocalShippingOutlinedIcon sx={{ fontSize: 14 }} /> },
+  "out for delivery": { label: "Out for Delivery", color: "#f97316", bg: "#fff7ed", icon: <LocalShippingOutlinedIcon sx={{ fontSize: 14 }} /> },
+  delivered:          { label: "Delivered",         color: "#10b981", bg: "#ecfdf5", icon: <CheckCircleOutlineIcon sx={{ fontSize: 14 }} /> },
+  completed:          { label: "Completed",         color: "#059669", bg: "#d1fae5", icon: <CheckCircleOutlineIcon sx={{ fontSize: 14 }} /> },
+  cancelled:          { label: "Cancelled",         color: "#ef4444", bg: "#fef2f2", icon: <CancelOutlinedIcon sx={{ fontSize: 14 }} /> },
+  returned:           { label: "Returned",          color: "#f59e0b", bg: "#fffbeb", icon: <CancelOutlinedIcon sx={{ fontSize: 14 }} /> },
+  refunded:           { label: "Refunded",          color: "#8b5cf6", bg: "#f5f3ff", icon: <PaymentOutlinedIcon sx={{ fontSize: 14 }} /> },
+  failed:             { label: "Failed",            color: "#dc2626", bg: "#fee2e2", icon: <CancelOutlinedIcon sx={{ fontSize: 14 }} /> },
 };
 
 const PAYMENT_STATUS_CONFIG = {
@@ -74,36 +84,52 @@ const PAYMENT_STATUS_CONFIG = {
   refunded: { label: "Refunded", color: "#6366f1", bg: "#eef2ff" },
 };
 
-/* ── Reusable helpers ── */
-const StatusChip = ({ status, config }) => {
-  const cfg = config[status] || config[String(status).toLowerCase()] || { label: status || "—", color: "#64748b", bg: "#f1f5f9" };
+/* ── Helpers ── */
+const StatusChip = ({ status, config = ORDER_STATUS_STYLE_MAP }) => {
+  const key = String(status || "").toLowerCase();
+  const cfg = config[key] || { label: status || "—", color: "#64748b", bg: "#f1f5f9" };
   return (
     <Chip
       icon={cfg.icon || null}
-      label={cfg.label}
+      label={cfg.label || status}
       size="small"
-      sx={{ fontWeight: 700, fontSize: 11, height: 26, bgcolor: cfg.bg, color: cfg.color, border: "1px solid", borderColor: cfg.color + "30", "& .MuiChip-icon": { color: cfg.color, ml: 0.5 } }}
+      sx={{
+        fontWeight: 700,
+        fontSize: 11,
+        height: 26,
+        bgcolor: cfg.bg,
+        color: cfg.color,
+        border: "1px solid",
+        borderColor: cfg.color + "35",
+        "& .MuiChip-icon": { color: cfg.color, ml: 0.5 },
+      }}
     />
   );
 };
 
 const InfoRow = ({ icon, label, value }) => (
   <Stack direction="row" spacing={1.5} alignItems="flex-start">
-    <Box sx={{ width: 28, height: 28, borderRadius: 1.5, bgcolor: "#f1f5f9", display: "grid", placeItems: "center", color: "#64748b", flexShrink: 0, mt: 0.2 }}>
+    <Box sx={{ width: 32, height: 32, borderRadius: 2, bgcolor: "action.hover", display: "grid", placeItems: "center", color: "text.secondary", flexShrink: 0 }}>
       {icon}
     </Box>
     <Box sx={{ minWidth: 0 }}>
-      <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 700, textTransform: "uppercase", fontSize: 10, letterSpacing: 0.5 }}>{label}</Typography>
-      <Typography variant="body2" sx={{ fontWeight: 600, wordBreak: "break-word" }}>{value || "—"}</Typography>
+      <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, textTransform: "uppercase", fontSize: 10, letterSpacing: 0.5 }}>
+        {label}
+      </Typography>
+      <Typography variant="body2" sx={{ fontWeight: 600, wordBreak: "break-word" }}>
+        {value || "—"}
+      </Typography>
     </Box>
   </Stack>
 );
 
 const SectionHeader = ({ icon, title, color = "#6366f1", bg = "#eef2ff", right }) => (
   <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-    <Stack direction="row" alignItems="center" spacing={1}>
-      <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: bg, display: "grid", placeItems: "center", color }}>{icon}</Box>
-      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{title}</Typography>
+    <Stack direction="row" alignItems="center" spacing={1.5}>
+      <Box sx={{ width: 34, height: 34, borderRadius: 2, bgcolor: bg, display: "grid", placeItems: "center", color }}>
+        {icon}
+      </Box>
+      <Typography variant="h6" sx={{ fontWeight: 800, fontSize: 16 }}>{title}</Typography>
     </Stack>
     {right}
   </Stack>
@@ -147,14 +173,7 @@ const getOrderAddressInfo = (order) => {
   };
 };
 
-
-
-
-/* ── Style constants ── */
-const cardSx = { borderRadius: 2.5, border: "1px solid", borderColor: "divider" };
-const headCellSx = { fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: "text.secondary", py: 1.5, borderBottom: "2px solid", borderColor: "divider" };
-const fieldSx = { "& .MuiOutlinedInput-root": { borderRadius: 2 }, "& .MuiInputLabel-root": { fontSize: 13 } };
-
+/* ── Main Order Details Component ── */
 const OderDetails = () => {
   const theme = useTheme();
   const { id } = useParams();
@@ -260,11 +279,78 @@ const OderDetails = () => {
     }
   };
 
-  const formatCurrency = (amount) =>
-    new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT" }).format(amount || 0);
+  const assignment = order?.delivery_man_assign || order?.delivery_man_assignment || null;
+  const currentAssignedMan = assignment?.delivery_man || assignment?.deliveryman || order?.delivery_man || null;
 
-  const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString("en-BD", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  useEffect(() => {
+    if (currentAssignedMan?.id) {
+      setSelectedDeliveryManId(String(currentAssignedMan.id));
+    } else {
+      setSelectedDeliveryManId("");
+    }
+    if (assignment?.note) {
+      setAssignNote(assignment.note);
+    }
+  }, [order, currentAssignedMan, assignment]);
+
+  const handleAssignDelivery = async () => {
+    if (!order?.id || !selectedDeliveryManId) return;
+    try {
+      setErrMsg("");
+      setAssigning(true);
+      const response = await assignDeliveryBoy({
+        order_id: order.id,
+        delivery_man_id: selectedDeliveryManId,
+        note: assignNote,
+      });
+
+      if (response?.status === "success") {
+        await fetchOrderDetails();
+      } else {
+        setErrMsg(extractErrorMessage(response?.message, "Failed to assign delivery man"));
+      }
+    } catch (error) {
+      console.error("Error assigning delivery man:", error);
+      setErrMsg(extractErrorMessage(error?.response?.data?.message, "Failed to assign delivery man"));
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const handleUnassignDelivery = async () => {
+    if (!order?.id) return;
+    try {
+      setErrMsg("");
+      setAssigning(true);
+      const response = await unassignDeliveryBoy({ order_id: order.id });
+      if (response?.status === "success") {
+        await fetchOrderDetails();
+        setSelectedDeliveryManId("");
+        setAssignNote("");
+      } else {
+        setErrMsg(extractErrorMessage(response?.message, "Failed to unassign delivery man"));
+      }
+    } catch (error) {
+      console.error("Error unassigning delivery man:", error);
+      setErrMsg(extractErrorMessage(error?.response?.data?.message, "Failed to unassign delivery man"));
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const formatCurrency = (amount) =>
+    new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT", maximumFractionDigits: 0 }).format(amount || 0);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "—";
+    return new Date(dateString).toLocaleDateString("en-BD", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   /* ── PDF generation ── */
   const generateReceiptPdf = async () => {
@@ -308,7 +394,6 @@ const OderDetails = () => {
       primaryDark: "#312e81",
       success: "#059669",
       danger: "#dc2626",
-      amber: "#d97706",
     };
     let y = 34;
 
@@ -318,6 +403,7 @@ const OderDetails = () => {
       doc.setTextColor(opts.color || colors.ink);
       doc.text(text, x, yPos, opts.options || {});
     };
+
     const drawFooter = () => {
       const footerY = pageHeight - 24;
       doc.setDrawColor(colors.line);
@@ -329,6 +415,7 @@ const OderDetails = () => {
         options: { align: "right" },
       });
     };
+
     const ensureSpace = (heightNeeded, resetY = 58) => {
       if (y + heightNeeded <= pageHeight - 60) return false;
       drawFooter();
@@ -336,6 +423,7 @@ const OderDetails = () => {
       y = resetY;
       return true;
     };
+
     const drawBadge = (text, x, yPos, color, bg) => {
       const width = Math.max(62, doc.getTextWidth(text) + 20);
       doc.setFillColor(bg);
@@ -344,12 +432,14 @@ const OderDetails = () => {
       drawText(text, x + 10, yPos + 1, { size: 8.5, weight: "bold", color });
       return width;
     };
+
     const drawLabelValue = (label, value, x, yPos, maxWidth) => {
       drawText(label, x, yPos, { size: 8, weight: "bold", color: colors.muted });
       const lines = doc.splitTextToSize(cleanText(value), maxWidth);
       drawText(lines, x, yPos + 16, { size: 9.5, color: colors.ink });
       return yPos + 16 + lines.length * 13;
     };
+
     const drawInfoCard = (title, rows, x, yPos, width) => {
       doc.setFillColor("#ffffff");
       doc.setDrawColor(colors.line);
@@ -365,8 +455,6 @@ const OderDetails = () => {
     doc.roundedRect(margin, y, contentWidth, 98, 14, 14, "F");
     doc.setFillColor(colors.primary);
     doc.circle(pageWidth - margin - 42, y + 34, 54, "F");
-    doc.setFillColor("#818cf8");
-    doc.circle(pageWidth - margin - 12, y + 84, 44, "F");
 
     drawText(receiptBrandName, margin + 22, y + 32, { size: 20, weight: "bold", color: "#ffffff" });
     drawText("Order Receipt", margin + 22, y + 56, { size: 12, color: "#c7d2fe" });
@@ -448,104 +536,55 @@ const OderDetails = () => {
       if (ensureSpace(rowHeight + 14)) drawTableHeader();
 
       doc.setFillColor(index % 2 === 0 ? "#ffffff" : colors.soft);
-      doc.setDrawColor("#eef2f7");
-      doc.roundedRect(table.x, y - 4, table.width, rowHeight, 8, 8, "FD");
-      drawText(itemLines, table.itemX, y + 13, { size: 9.5, weight: "bold", color: colors.ink });
-      drawText(shopLines, table.shopX, y + 13, { size: 8.5, color: colors.muted });
-      drawText(String(item.qty || 0), table.qtyX, y + 13, { size: 9.5, color: colors.ink, options: { align: "center" } });
-      drawText(formatCurrency(item.unit_price), table.unitX, y + 13, { size: 9, color: colors.ink, options: { align: "right" } });
-      drawText(formatCurrency(item.line_total), table.totalX, y + 13, { size: 9.5, weight: "bold", color: colors.ink, options: { align: "right" } });
-      y += rowHeight + 8;
+      doc.setDrawColor(colors.line);
+      doc.roundedRect(table.x, y, table.width, rowHeight, 6, 6, "FD");
+
+      drawText(itemLines, table.itemX, y + 16, { size: 9, weight: "bold", color: colors.ink });
+      drawText(shopLines, table.shopX, y + 16, { size: 8.5, color: colors.muted });
+      drawText(String(item.quantity || 1), table.qtyX, y + 16, { size: 9, weight: "bold", color: colors.ink, options: { align: "center" } });
+      drawText(formatCurrency(item.price), table.unitX, y + 16, { size: 9, color: colors.muted, options: { align: "right" } });
+      drawText(formatCurrency((item.price || 0) * (item.quantity || 1)), table.totalX, y + 16, { size: 9, weight: "bold", color: colors.ink, options: { align: "right" } });
+
+      y += rowHeight + 6;
     });
 
-    ensureSpace(132);
-    const totalsWidth = 224;
-    const totalsX = pageWidth - margin - totalsWidth;
-    y += 4;
-    doc.setFillColor("#ffffff");
-    doc.setDrawColor(colors.line);
-    doc.roundedRect(totalsX, y, totalsWidth, 114, 12, 12, "FD");
-    [
-      ["Subtotal", formatCurrency(order.subtotal)],
-      ["Shipping", formatCurrency(order.shipping_fee)],
-      ["Discount", `-${formatCurrency(order.discount)}`],
-    ].forEach(([label, value], index) => {
-      const rowY = y + 24 + index * 18;
-      drawText(label, totalsX + 16, rowY, { size: 9, color: colors.muted });
-      drawText(value, totalsX + totalsWidth - 16, rowY, { size: 9, weight: "bold", color: colors.ink, options: { align: "right" } });
-    });
-    doc.setDrawColor(colors.line);
-    doc.line(totalsX + 16, y + 73, totalsX + totalsWidth - 16, y + 73);
-    drawText("Grand Total", totalsX + 16, y + 94, { size: 11, weight: "bold", color: colors.primaryDark });
-    drawText(formatCurrency(order.total), totalsX + totalsWidth - 16, y + 94, {
-      size: 12,
-      weight: "bold",
-      color: colors.primary,
-      options: { align: "right" },
-    });
+    ensureSpace(110);
+    const summaryWidth = 230;
+    const summaryX = pageWidth - margin - summaryWidth;
 
-    if (order.note) {
-      y += 136;
-      ensureSpace(58);
-      doc.setFillColor("#fffbeb");
-      doc.setDrawColor("#fde68a");
-      doc.roundedRect(margin, y, contentWidth, 50, 10, 10, "FD");
-      drawText("Order Note", margin + 14, y + 19, { size: 9, weight: "bold", color: colors.amber });
-      drawText(doc.splitTextToSize(cleanText(order.note), contentWidth - 28), margin + 14, y + 36, { size: 9, color: colors.ink });
-    }
+    doc.setFillColor(colors.soft);
+    doc.setDrawColor(colors.line);
+    doc.roundedRect(summaryX, y, summaryWidth, 90, 10, 10, "FD");
+
+    const summaryY = y + 20;
+    drawText("Subtotal", summaryX + 16, summaryY, { size: 9, color: colors.muted });
+    drawText(formatCurrency(order.total), pageWidth - margin - 16, summaryY, { size: 9, weight: "bold", color: colors.ink, options: { align: "right" } });
+
+    drawText("Grand Total", summaryX + 16, summaryY + 40, { size: 10, weight: "bold", color: colors.primaryDark });
+    drawText(formatCurrency(order.total), pageWidth - margin - 16, summaryY + 40, { size: 12, weight: "bold", color: colors.primaryDark, options: { align: "right" } });
 
     drawFooter();
-    doc.save(`order-${order.order_number || order.id}.pdf`);
+    doc.save(`receipt-${order.order_number || order.id}.pdf`);
   };
 
-  /* ── Delivery ── */
-  const assignment = order?.delivery_man ?? null;
-  const deliveryProfile = assignment?.delivery_man ?? null;
-
-  useEffect(() => {
-    if (assignment?.delivery_man_id) setSelectedDeliveryManId(String(assignment.delivery_man_id));
-  }, [assignment?.delivery_man_id]);
-
-  const handleAssignDelivery = async () => {
-    if (!order?.id || !selectedDeliveryManId) return;
-    try {
-      setErrMsg(""); setAssigning(true);
-      const response = await assignDeliveryBoy({ delivery_man_id: selectedDeliveryManId, order_id: order.id, note: assignNote });
-      if (response?.status === "success") { await fetchOrderDetails(); }
-      else { setErrMsg(extractErrorMessage(response?.message, "Failed to assign delivery man")); }
-    } catch (error) {
-      console.error("Error assigning delivery man:", error);
-      setErrMsg(extractErrorMessage(error?.response?.data?.message, "Failed to assign delivery man"));
-    } finally { setAssigning(false); }
-  };
-
-  const handleUnassignDelivery = async () => {
-    if (!order?.id) return;
-    try {
-      setErrMsg(""); setAssigning(true);
-      const response = await unassignDeliveryBoy({ order_id: order.id });
-      if (response?.status === "success") { await fetchOrderDetails(); setSelectedDeliveryManId(""); setAssignNote(""); }
-      else { setErrMsg(extractErrorMessage(response?.message, "Failed to unassign delivery man")); }
-    } catch (error) {
-      console.error("Error unassigning delivery man:", error);
-      setErrMsg(extractErrorMessage(error?.response?.data?.message, "Failed to unassign delivery man"));
-    } finally { setAssigning(false); }
-  };
-
-  /* ── Loading / empty ── */
   if (loading) {
     return (
-      <Box sx={{ p: 3, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress sx={{ color: "#6366f1" }} />
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <CircularProgress size={24} sx={{ color: "#6366f1" }} />
+          <Typography sx={{ fontWeight: 700, color: "text.secondary" }}>Loading order details...</Typography>
+        </Stack>
       </Box>
     );
   }
 
   if (!order) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error" sx={{ borderRadius: 2.5 }}>Order not found</Alert>
-        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2, borderRadius: 2, textTransform: "none" }}>Back</Button>
+      <Box sx={{ p: 3, textAlign: "center" }}>
+        <Typography variant="h6">Order not found</Typography>
+        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2, borderRadius: 2 }}>
+          Back to Orders
+        </Button>
       </Box>
     );
   }
@@ -557,80 +596,113 @@ const OderDetails = () => {
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1200, mx: "auto" }}>
-
-      {/* ─── Header ─── */}
+      {/* ── Header Bar ── */}
       <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "center" }} justifyContent="space-between" spacing={2} sx={{ mb: 3 }}>
         <Stack direction="row" alignItems="center" spacing={2}>
-          <IconButton onClick={() => navigate(-1)} sx={{ bgcolor: "#f1f5f9", "&:hover": { bgcolor: "#e2e8f0" } }}>
+          <IconButton onClick={() => navigate(-1)} sx={{ bgcolor: "action.hover", "&:hover": { bgcolor: "action.selected" } }}>
             <ArrowBackIcon fontSize="small" />
           </IconButton>
           <Box>
             <Typography variant="h5" fontWeight={800}>Order Details</Typography>
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.3 }}>
-              <Typography variant="body2" color="text.secondary">{order.order_number}</Typography>
+              <Typography variant="body2" color="text.secondary" fontWeight={700}>
+                #{order.order_number || order.id}
+              </Typography>
               <StatusChip status={currentStatusKey} config={dynamicOrderStatusConfig} />
             </Stack>
           </Box>
         </Stack>
-        <Stack direction="row" spacing={1}>
-          <Button variant="contained" size="small" startIcon={<PictureAsPdfOutlinedIcon sx={{ fontSize: 16 }} />} onClick={generateReceiptPdf}
-            sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2, bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, boxShadow: "0 2px 8px #6366f130" }}>
-            Receipt PDF
+
+        <Stack direction="row" spacing={1.5}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<PictureAsPdfOutlinedIcon sx={{ fontSize: 16 }} />}
+            onClick={generateReceiptPdf}
+            sx={{
+              textTransform: "none",
+              fontWeight: 700,
+              borderRadius: 2,
+              bgcolor: "#6366f1",
+              boxShadow: "0 2px 10px rgba(99,102,241,0.25)",
+              "&:hover": { bgcolor: "#4f46e5" },
+            }}
+          >
+            Download PDF
           </Button>
-          <Button variant="outlined" size="small" startIcon={<PrintOutlinedIcon sx={{ fontSize: 16 }} />} onClick={() => window.print()}
-            sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2, borderColor: "divider", color: "text.primary" }}>
+
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<PrintOutlinedIcon sx={{ fontSize: 16 }} />}
+            onClick={() => window.print()}
+            sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2, borderColor: "divider", color: "text.primary" }}
+          >
             Print
           </Button>
         </Stack>
       </Stack>
 
-      {errMsg && <Alert severity="error" sx={{ mb: 2, borderRadius: 2.5 }}>{errMsg}</Alert>}
+      {errMsg && <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2.5 }}>{errMsg}</Alert>}
 
-      {/* ─── Quick Summary Banner ─── */}
-      <Card variant="outlined" sx={{ ...cardSx, mb: 2.5, background: `linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%)` }}>
+      {/* ── Quick Summary Card ── */}
+      <Card variant="outlined" sx={{ borderRadius: 2.5, borderColor: "divider", mb: 3, background: theme.palette.mode === "dark" ? "rgba(99,102,241,0.06)" : "linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%)" }}>
         <CardContent sx={{ py: 2.5 }}>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={4}>
               <Stack direction="row" alignItems="center" spacing={1.5}>
-                <Avatar sx={{ width: 44, height: 44, bgcolor: "#6366f1", borderRadius: 2.5 }}>
+                <Avatar sx={{ width: 44, height: 44, bgcolor: "#6366f1", color: "#fff", borderRadius: 2 }}>
                   <ReceiptLongOutlinedIcon />
                 </Avatar>
                 <Box>
-                  <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 700, fontSize: 10, letterSpacing: 0.5 }}>ORDER NO.</Typography>
-                  <Typography variant="subtitle1" fontWeight={800}>{order.order_number || order.id}</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, fontSize: 10, letterSpacing: 0.5 }}>
+                    ORDER NUMBER
+                  </Typography>
+                  <Typography variant="h6" fontWeight={800}>
+                    #{order.order_number || order.id}
+                  </Typography>
                 </Box>
               </Stack>
             </Grid>
+
             <Grid item xs={6} sm={4}>
               <Stack spacing={0.5}>
-                <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 700, fontSize: 10, letterSpacing: 0.5 }}>STATUS</Typography>
-                <Stack direction="row" spacing={0.75} flexWrap="wrap">
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, fontSize: 10, letterSpacing: 0.5 }}>
+                  STATUS SUMMARY
+                </Typography>
+                <Stack direction="row" spacing={0.8} flexWrap="wrap">
                   <StatusChip status={currentStatusKey} config={dynamicOrderStatusConfig} />
                   <StatusChip status={order.payment_status} config={PAYMENT_STATUS_CONFIG} />
                 </Stack>
               </Stack>
             </Grid>
+
             <Grid item xs={6} sm={4} sx={{ textAlign: { sm: "right" } }}>
-              <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 700, fontSize: 10, letterSpacing: 0.5 }}>TOTAL</Typography>
-              <Typography variant="h5" fontWeight={800} sx={{ color: "#6366f1" }}>{formatCurrency(order.total)}</Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, fontSize: 10, letterSpacing: 0.5 }}>
+                TOTAL AMOUNT
+              </Typography>
+              <Typography variant="h5" fontWeight={800} sx={{ color: "#6366f1" }}>
+                {formatCurrency(order.total)}
+              </Typography>
             </Grid>
           </Grid>
         </CardContent>
       </Card>
 
-      {/* ─── Status Progress ─── */}
-      <Card variant="outlined" sx={{ ...cardSx, mb: 2.5 }}>
-        <CardContent>
-          <SectionHeader icon={<SettingsOutlinedIcon sx={{ fontSize: 18 }} />} title="Update Status" />
+      {/* ── Status Progress / Fast Update Controls ── */}
+      <Card variant="outlined" sx={{ borderRadius: 2.5, borderColor: "divider", mb: 3 }}>
+        <CardContent sx={{ p: 2.5 }}>
+          <SectionHeader icon={<SettingsOutlinedIcon sx={{ fontSize: 18 }} />} title="Update Order Status" />
           {orderStatusList.length === 0 ? (
             <CircularProgress size={20} sx={{ color: "#6366f1" }} />
           ) : (
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ rowGap: 1 }}>
               {orderStatusList.map((s, i) => {
                 const key = s.name.toLowerCase();
                 const cfg = dynamicOrderStatusConfig[key] || { color: "#64748b", bg: "#f1f5f9" };
                 const isActive = currentStatusKey === key;
                 const isPast = currentIdx >= 0 && i < currentIdx;
+
                 return (
                   <Button
                     key={s.id}
@@ -644,13 +716,12 @@ const OderDetails = () => {
                       fontSize: 12,
                       borderRadius: 2,
                       px: 2,
-                      minWidth: 0,
+                      py: 0.8,
                       border: "1.5px solid",
                       borderColor: isActive ? cfg.color : isPast ? cfg.color + "40" : "divider",
                       bgcolor: isActive ? cfg.bg : isPast ? cfg.bg + "80" : "transparent",
                       color: isActive ? cfg.color : isPast ? cfg.color : "text.secondary",
                       "&:hover": { bgcolor: cfg.bg, borderColor: cfg.color },
-                      ...(isActive && { boxShadow: `0 2px 8px ${cfg.color}30` }),
                     }}
                   >
                     {s.name}
@@ -662,92 +733,135 @@ const OderDetails = () => {
         </CardContent>
       </Card>
 
-      {/* ─── Info Row: Date / Payment ─── */}
-      <Grid container spacing={2} sx={{ mb: 2.5 }}>
-        {[
-          { icon: <CalendarTodayOutlinedIcon sx={{ fontSize: 16 }} />, label: "Order Date", value: formatDate(order.created_at), accent: "#3b82f6", bg: "#eff6ff" },
-          { icon: <CalendarTodayOutlinedIcon sx={{ fontSize: 16 }} />, label: "Last Updated", value: formatDate(order.updated_at), accent: "#f59e0b", bg: "#fffbeb" },
-          { icon: <PaymentOutlinedIcon sx={{ fontSize: 16 }} />, label: "Payment", value: <StatusChip status={order.payment_status} config={PAYMENT_STATUS_CONFIG} />, accent: "#10b981", bg: "#ecfdf5" },
-          { icon: <LocalMallOutlinedIcon sx={{ fontSize: 16 }} />, label: "Items", value: `${itemsArr.length} product${itemsArr.length !== 1 ? "s" : ""}`, accent: "#8b5cf6", bg: "#f5f3ff" },
-        ].map((c) => (
-          <Grid item xs={6} md={3} key={c.label}>
-            <Card variant="outlined" sx={{ ...cardSx, height: "100%" }}>
-              <CardContent sx={{ py: 2, "&:last-child": { pb: 2 } }}>
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                  <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: c.bg, display: "grid", placeItems: "center", color: c.accent }}>{c.icon}</Box>
-                  <Box>
-                    <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 700, fontSize: 10, letterSpacing: 0.5 }}>{c.label}</Typography>
-                    {typeof c.value === "string" ? (
-                      <Typography variant="body2" fontWeight={600}>{c.value}</Typography>
-                    ) : c.value}
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* ─── Customer + Shipping row ─── */}
-      <Grid container spacing={2} sx={{ mb: 2.5 }}>
+      {/* ── Overview Cards Grid ── */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} md={6}>
-          <Card variant="outlined" sx={{ ...cardSx, height: "100%" }}>
-            <CardContent>
-              <SectionHeader icon={<PersonOutlineIcon sx={{ fontSize: 18 }} />} title="Customer" color="#6366f1" bg="#eef2ff" />
+          <Card variant="outlined" sx={{ borderRadius: 2.5, borderColor: "divider", height: "100%" }}>
+            <CardContent sx={{ p: 2.5 }}>
+              <SectionHeader icon={<PersonOutlineIcon sx={{ fontSize: 18 }} />} title="Customer Details" color="#6366f1" bg="#eef2ff" />
               <Stack spacing={2}>
                 <InfoRow icon={<BadgeOutlinedIcon sx={{ fontSize: 16 }} />} label="Name" value={addressInfo.name} />
                 <InfoRow icon={<PhoneOutlinedIcon sx={{ fontSize: 16 }} />} label="Phone" value={addressInfo.phone} />
-                <InfoRow icon={<BadgeOutlinedIcon sx={{ fontSize: 16 }} />} label="User ID" value={order.user_id} />
-                <InfoRow icon={<HomeOutlinedIcon sx={{ fontSize: 16 }} />} label="User Address ID" value={addressInfo.id} />
+                <InfoRow icon={<BadgeOutlinedIcon sx={{ fontSize: 16 }} />} label="User ID" value={order.user_id ? `#${order.user_id}` : "N/A"} />
+                <InfoRow icon={<HomeOutlinedIcon sx={{ fontSize: 16 }} />} label="Address ID" value={addressInfo.id ? `#${addressInfo.id}` : "N/A"} />
               </Stack>
             </CardContent>
           </Card>
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <Card variant="outlined" sx={{ ...cardSx, height: "100%" }}>
-            <CardContent>
-              <SectionHeader icon={<LocationOnOutlinedIcon sx={{ fontSize: 18 }} />} title="Shipping" color="#10b981" bg="#ecfdf5" />
+          <Card variant="outlined" sx={{ borderRadius: 2.5, borderColor: "divider", height: "100%" }}>
+            <CardContent sx={{ p: 2.5 }}>
+              <SectionHeader icon={<LocationOnOutlinedIcon sx={{ fontSize: 18 }} />} title="Shipping Address" color="#10b981" bg="#ecfdf5" />
               <Stack spacing={2}>
-                <InfoRow icon={<HomeOutlinedIcon sx={{ fontSize: 16 }} />} label="Address" value={addressInfo.addressLine} />
+                <InfoRow icon={<HomeOutlinedIcon sx={{ fontSize: 16 }} />} label="Full Address" value={addressInfo.addressLine} />
                 <Grid container spacing={1}>
-                  <Grid item xs={12} sm={4}><InfoRow icon={<LocationOnOutlinedIcon sx={{ fontSize: 16 }} />} label="Zone" value={addressInfo.zone} /></Grid>
-                  <Grid item xs={12} sm={4}><InfoRow icon={<LocationOnOutlinedIcon sx={{ fontSize: 16 }} />} label="District" value={addressInfo.district} /></Grid>
-                  <Grid item xs={12} sm={4}><InfoRow icon={<LocationOnOutlinedIcon sx={{ fontSize: 16 }} />} label="Area" value={addressInfo.area} /></Grid>
+                  <Grid item xs={12} sm={4}>
+                    <InfoRow icon={<LocationOnOutlinedIcon sx={{ fontSize: 16 }} />} label="Zone" value={addressInfo.zone} />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <InfoRow icon={<LocationOnOutlinedIcon sx={{ fontSize: 16 }} />} label="District" value={addressInfo.district} />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <InfoRow icon={<LocationOnOutlinedIcon sx={{ fontSize: 16 }} />} label="Area" value={addressInfo.area} />
+                  </Grid>
                 </Grid>
-                {order.note && <InfoRow icon={<NoteAltOutlinedIcon sx={{ fontSize: 16 }} />} label="Note" value={order.note} />}
+                {order.note && <InfoRow icon={<NoteAltOutlinedIcon sx={{ fontSize: 16 }} />} label="Order Note" value={order.note} />}
               </Stack>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* ─── Delivery Assignment ─── */}
-      <Card variant="outlined" sx={{ ...cardSx, mb: 2.5 }}>
-        <CardContent>
-          <SectionHeader icon={<AssignmentIndOutlinedIcon sx={{ fontSize: 18 }} />} title="Assign Delivery Man" color="#8b5cf6" bg="#f5f3ff" />
+      {/* ── Assign Delivery Man Card ── */}
+      <Card variant="outlined" sx={{ borderRadius: 2.5, borderColor: "divider", mb: 3 }}>
+        <CardContent sx={{ p: 2.5 }}>
+          <SectionHeader
+            icon={<DeliveryDiningOutlinedIcon sx={{ fontSize: 18 }} />}
+            title="Delivery Assignment"
+            color="#8b5cf6"
+            bg="#f5f3ff"
+            right={
+              currentAssignedMan ? (
+                <Chip
+                  icon={<CheckCircleOutlineIcon sx={{ fontSize: 13 }} />}
+                  label={`Assigned to ${currentAssignedMan.name}`}
+                  size="small"
+                  sx={{ bgcolor: "#ecfdf5", color: "#10b981", fontWeight: 700, borderRadius: 1.5 }}
+                />
+              ) : (
+                <Chip label="Unassigned" size="small" variant="outlined" sx={{ color: "text.secondary", fontSize: 11 }} />
+              )
+            }
+          />
+
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={5}>
-              <TextField select fullWidth label="Delivery Man" value={selectedDeliveryManId} onChange={(e) => setSelectedDeliveryManId(e.target.value)} disabled={deliveryLoading || assigning} size="small" sx={fieldSx}>
-                <MenuItem value="">Select delivery man</MenuItem>
+              <TextField
+                select
+                fullWidth
+                label="Select Delivery Man"
+                value={selectedDeliveryManId}
+                onChange={(e) => setSelectedDeliveryManId(e.target.value)}
+                disabled={deliveryLoading || assigning}
+                size="small"
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+              >
+                <MenuItem value="">Select delivery personnel</MenuItem>
                 {deliveryMen.map((man) => (
-                  <MenuItem key={man?.id} value={String(man?.id)}>{man?.name} ({man?.phone || "N/A"})</MenuItem>
+                  <MenuItem key={man?.id} value={String(man?.id)}>
+                    {man?.name} ({man?.phone || "N/A"})
+                  </MenuItem>
                 ))}
               </TextField>
             </Grid>
+
             <Grid item xs={12} md={5}>
-              <TextField fullWidth label="Note" value={assignNote} onChange={(e) => setAssignNote(e.target.value)} disabled={assigning} size="small" sx={fieldSx} />
+              <TextField
+                fullWidth
+                label="Delivery Note / Instructions"
+                value={assignNote}
+                onChange={(e) => setAssignNote(e.target.value)}
+                disabled={assigning}
+                size="small"
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+              />
             </Grid>
+
             <Grid item xs={12} md={2}>
               {assignment ? (
-                <Button fullWidth variant="outlined" onClick={handleUnassignDelivery} disabled={assigning}
-                  sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2, borderColor: "#ef4444", color: "#ef4444", "&:hover": { bgcolor: "#fef2f2", borderColor: "#ef4444" } }}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={handleUnassignDelivery}
+                  disabled={assigning}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    borderColor: "#ef4444",
+                    color: "#ef4444",
+                    "&:hover": { bgcolor: "#fef2f2", borderColor: "#ef4444" },
+                  }}
+                >
                   Unassign
                 </Button>
               ) : (
-                <Button fullWidth variant="contained" onClick={handleAssignDelivery} disabled={!selectedDeliveryManId || assigning}
-                  sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2, bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" }, boxShadow: "0 2px 8px #8b5cf630" }}>
-                  Assign
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={handleAssignDelivery}
+                  disabled={!selectedDeliveryManId || assigning}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    bgcolor: "#8b5cf6",
+                    "&:hover": { bgcolor: "#7c3aed" },
+                    boxShadow: "0 2px 8px rgba(139,92,246,0.25)",
+                  }}
+                >
+                  {assigning ? "Assigning..." : "Assign"}
                 </Button>
               )}
             </Grid>
@@ -755,114 +869,158 @@ const OderDetails = () => {
         </CardContent>
       </Card>
 
-      {/* ─── Delivery Info ─── */}
-      {assignment && (
-        <Card variant="outlined" sx={{ ...cardSx, mb: 2.5 }}>
-          <CardContent>
-            <SectionHeader icon={<DeliveryDiningOutlinedIcon sx={{ fontSize: 18 }} />} title="Delivery Information" color="#0ea5e9" bg="#f0f9ff" />
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Stack spacing={2}>
-                  <InfoRow icon={<SettingsOutlinedIcon sx={{ fontSize: 16 }} />} label="Delivery Status" value={<StatusChip status={assignment?.status ?? "N/A"} config={dynamicOrderStatusConfig} />} />
-                  <InfoRow icon={<NoteAltOutlinedIcon sx={{ fontSize: 16 }} />} label="Note" value={assignment?.note || "N/A"} />
-                  <InfoRow icon={<CalendarTodayOutlinedIcon sx={{ fontSize: 16 }} />} label="Assigned At" value={assignment?.created_at ? formatDate(assignment.created_at) : "N/A"} />
-                </Stack>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Stack spacing={2}>
-                  <InfoRow icon={<BadgeOutlinedIcon sx={{ fontSize: 16 }} />} label="Delivery Man" value={deliveryProfile?.name ?? "N/A"} />
-                  <InfoRow icon={<EmailOutlinedIcon sx={{ fontSize: 16 }} />} label="Email" value={deliveryProfile?.email ?? "N/A"} />
-                  <InfoRow icon={<PhoneOutlinedIcon sx={{ fontSize: 16 }} />} label="Phone" value={deliveryProfile?.phone ?? "N/A"} />
-                  <InfoRow icon={<HomeOutlinedIcon sx={{ fontSize: 16 }} />} label="Address" value={deliveryProfile?.address || "N/A"} />
-                </Stack>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ─── Order Items Table ─── */}
-      <Card variant="outlined" sx={{ ...cardSx, mb: 2.5 }}>
+      {/* ── Order Items Table ── */}
+      <Card variant="outlined" sx={{ borderRadius: 2.5, borderColor: "divider", mb: 3, overflow: "hidden" }}>
         <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
-          <Box sx={{ px: 2.5, pt: 2.5, pb: 1.5 }}>
-            <SectionHeader icon={<ShoppingBagOutlinedIcon sx={{ fontSize: 18 }} />} title={`Order Items (${itemsArr.length})`} color="#f59e0b" bg="#fffbeb" />
+          <Box sx={{ p: 2.5, pb: 1.5 }}>
+            <SectionHeader
+              icon={<LocalMallOutlinedIcon sx={{ fontSize: 18 }} />}
+              title="Purchased Items"
+              color="#0ea5e9"
+              bg="#f0f9ff"
+              right={
+                <Chip
+                  label={`${itemsArr.length} item${itemsArr.length === 1 ? "" : "s"}`}
+                  size="small"
+                  variant="outlined"
+                  sx={{ fontWeight: 700, borderRadius: 1.5 }}
+                />
+              }
+            />
           </Box>
 
-          {itemsArr.length > 0 ? (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ bgcolor: "action.hover" }}>
-                    <TableCell sx={headCellSx}>Product</TableCell>
-                    <TableCell sx={headCellSx}>SKU</TableCell>
-                    <TableCell sx={{ ...headCellSx, textAlign: "center" }}>Unit Price</TableCell>
-                    <TableCell sx={{ ...headCellSx, textAlign: "center" }}>Qty</TableCell>
-                    <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Line Total</TableCell>
-                    <TableCell sx={{ ...headCellSx, textAlign: "center" }}>Status</TableCell>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ bgcolor: theme.palette.mode === "dark" ? "rgba(99,102,241,0.08)" : "#f8fafc" }}>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: "text.secondary" }}>
+                    Product Item
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: "text.secondary" }}>
+                    Shop / Vendor
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: "text.secondary" }}>
+                    Quantity
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: "text.secondary" }}>
+                    Unit Price
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: "text.secondary" }}>
+                    Total
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {itemsArr.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.disabled" }}>
+                      No items found in this order
+                    </TableCell>
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {itemsArr.map((item) => (
-                    <TableRow key={item.id} sx={{ "&:hover": { bgcolor: "action.hover" }, transition: "background .15s" }}>
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        <Typography variant="body2" fontWeight={700}>{item.product_name}</Typography>
-                        <Typography variant="caption" sx={{ color: "#6366f1" }}>Shop: {item?.shop?.name || item?.product?.shop?.name || ""}</Typography>
-                      </TableCell>
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
-                        <Typography variant="body2" sx={{ color: "text.secondary" }}>{item.sku}</Typography>
-                      </TableCell>
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", textAlign: "center" }}>
-                        <Typography variant="body2">{formatCurrency(item.unit_price)}</Typography>
-                      </TableCell>
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", textAlign: "center" }}>
-                        <Chip label={item.qty} size="small" sx={{ fontWeight: 700, minWidth: 32, bgcolor: "#f1f5f9" }} />
-                      </TableCell>
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", textAlign: "right" }}>
-                        <Typography variant="body2" fontWeight={700}>{formatCurrency(item.line_total)}</Typography>
-                      </TableCell>
-                      <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", textAlign: "center" }}>
-                        <StatusChip status={(item.status || "").toLowerCase()} config={dynamicOrderStatusConfig} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          ) : (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <ShoppingBagOutlinedIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} />
-              <Typography color="text.secondary">No items in this order</Typography>
-            </Box>
-          )}
+                ) : (
+                  itemsArr.map((item, idx) => {
+                    const productName = item.product_name || item.name || "Product Item";
+                    const shopName = item?.shop?.shop_name || item?.shop?.name || order.shop_name || "Main Store";
+                    const qty = item.quantity || 1;
+                    const price = item.price || 0;
+                    const itemTotal = price * qty;
+                    const imgUrl = item.product_thumbnail || item.thumbnail || item.image || "";
+
+                    return (
+                      <TableRow key={item.id || idx} hover sx={{ "&:last-child td": { borderBottom: "none" } }}>
+                        {/* Product Info */}
+                        <TableCell sx={{ py: 1.8 }}>
+                          <Stack direction="row" spacing={1.5} alignItems="center">
+                            <Avatar
+                              src={imgUrl}
+                              variant="rounded"
+                              sx={{ width: 44, height: 44, bgcolor: "action.hover", borderRadius: 1.5 }}
+                            >
+                              <ShoppingBagOutlinedIcon sx={{ fontSize: 20, color: "text.secondary" }} />
+                            </Avatar>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>
+                                {productName}
+                              </Typography>
+                              {item.variant && (
+                                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                  Variant: {item.variant}
+                                </Typography>
+                              )}
+                            </Box>
+                          </Stack>
+                        </TableCell>
+
+                        {/* Shop Info */}
+                        <TableCell>
+                          <Stack direction="row" alignItems="center" spacing={0.8}>
+                            <StorefrontOutlinedIcon sx={{ fontSize: 15, color: "text.secondary" }} />
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {shopName}
+                            </Typography>
+                          </Stack>
+                        </TableCell>
+
+                        {/* Qty */}
+                        <TableCell align="center">
+                          <Chip label={qty} size="small" sx={{ fontWeight: 800, minWidth: 28, height: 24, borderRadius: 1.5 }} />
+                        </TableCell>
+
+                        {/* Unit Price */}
+                        <TableCell align="right">
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {formatCurrency(price)}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Line Total */}
+                        <TableCell align="right">
+                          <Typography variant="body2" sx={{ fontWeight: 800, color: "text.primary" }}>
+                            {formatCurrency(itemTotal)}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </CardContent>
       </Card>
 
-      {/* ─── Order Summary ─── */}
-      <Card variant="outlined" sx={{ ...cardSx }}>
-        <CardContent>
-          <SectionHeader icon={<ReceiptLongOutlinedIcon sx={{ fontSize: 18 }} />} title="Order Summary" color="#10b981" bg="#ecfdf5" />
-          <Box sx={{ maxWidth: 380, ml: "auto" }}>
-            <Stack spacing={1.5}>
-              {[
-                { label: "Subtotal", value: formatCurrency(order.subtotal) },
-                { label: "Shipping Fee", value: formatCurrency(order.shipping_fee) },
-                { label: "Discount", value: `-${formatCurrency(order.discount)}`, color: "#ef4444" },
-              ].map((r) => (
-                <Stack key={r.label} direction="row" justifyContent="space-between">
-                  <Typography variant="body2" color="text.secondary">{r.label}</Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: r.color || "text.primary" }}>{r.value}</Typography>
-                </Stack>
-              ))}
-              <Box sx={{ borderTop: "2px dashed", borderColor: "divider", pt: 1.5 }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="h6" fontWeight={800}>Total</Typography>
-                  <Typography variant="h5" fontWeight={800} sx={{ color: "#6366f1" }}>{formatCurrency(order.total)}</Typography>
-                </Stack>
-              </Box>
+      {/* ── Order Financial Summary Box ── */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+        <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2.5, width: { xs: "100%", sm: 340 } }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5, textTransform: "uppercase", fontSize: 11, letterSpacing: 0.5, color: "text.secondary" }}>
+            Payment Summary
+          </Typography>
+          <Stack spacing={1}>
+            <Stack direction="row" justifyContent="space-between">
+              <Typography variant="body2" color="text.secondary">Subtotal</Typography>
+              <Typography variant="body2" fontWeight={700}>{formatCurrency(order.subtotal || order.total)}</Typography>
             </Stack>
-          </Box>
-        </CardContent>
-      </Card>
+            {order.shipping_fee > 0 && (
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="body2" color="text.secondary">Shipping Fee</Typography>
+                <Typography variant="body2" fontWeight={700}>{formatCurrency(order.shipping_fee)}</Typography>
+              </Stack>
+            )}
+            {order.discount > 0 && (
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="body2" color="text.secondary">Discount</Typography>
+                <Typography variant="body2" fontWeight={700} color="error.main">-{formatCurrency(order.discount)}</Typography>
+              </Stack>
+            )}
+            <Divider sx={{ my: 1 }} />
+            <Stack direction="row" justifyContent="space-between" alignItems="baseline">
+              <Typography variant="subtitle1" fontWeight={800}>Grand Total</Typography>
+              <Typography variant="h6" fontWeight={800} color="#6366f1">{formatCurrency(order.total)}</Typography>
+            </Stack>
+          </Stack>
+        </Paper>
+      </Box>
     </Box>
   );
 };

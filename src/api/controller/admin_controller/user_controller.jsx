@@ -231,3 +231,43 @@ export const getUserDetail = async (id) => {
     return { status: 'error', data: [] };
   }
 };
+
+export const getAdminList = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get(`/api/users/admin-list`, {
+      params,
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem("authToken")}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    if (error?.response?.status === 404) {
+      const fallback = await axiosInstance.get(`/admin-list`, {
+        params,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem("authToken")}`,
+        },
+      });
+      return fallback.data;
+    }
+    console.error("Error fetching admin list:", error);
+    throw error;
+  }
+};
+
+export const getAdmins = getAdminList;
+
+export const changePassword = async (data) => {
+  try {
+    const response = await axiosInstance.post(`/api/users/change-password`, data, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error changing password:", error);
+    throw error;
+  }
+};

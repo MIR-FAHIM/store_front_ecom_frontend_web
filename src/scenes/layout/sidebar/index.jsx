@@ -38,6 +38,8 @@ import {
   LocalOfferOutlined,
   CardMembershipOutlined,
   DesignServicesOutlined,
+  AdminPanelSettingsOutlined,
+  TipsAndUpdatesOutlined,
 } from "@mui/icons-material";
 import defaultLogo from "../../../assets/logo/store_myzoo_white.png";
 import { ToggledContext } from "../../../App";
@@ -104,6 +106,11 @@ const NAV_GROUPS = [
         icon: <CardMembershipOutlined fontSize="small" />,
       },
       {
+        title: "Store Owner Tips",
+        path: "/store-owner/tips",
+        icon: <TipsAndUpdatesOutlined fontSize="small" />,
+      },
+      {
         title: "Media Marketplace",
         path: "/admin/media-marketplace",
         icon: <DesignServicesOutlined fontSize="small" />,
@@ -122,6 +129,12 @@ const NAV_GROUPS = [
           { title: "All Delivery Men",   path: "/ecom/delivery/all", icon: <DeliveryDiningOutlined fontSize="small" /> },
         ],
       },
+      {
+        title: "Role", key: "role", icon: <AdminPanelSettingsOutlined fontSize="small" />,
+        children: [
+          { title: "Admin List", path: "/admin/admin-list", icon: <FormatListBulleted fontSize="small" /> },
+        ],
+      },
     ],
   },
   {
@@ -130,9 +143,10 @@ const NAV_GROUPS = [
       {
         title: "Reports", key: "report", icon: <BarChartOutlined fontSize="small" />,
         children: [
-          { title: "Today Report", path: "/ecom/report/today",      icon: <TodayOutlined         fontSize="small" /> },
-          { title: "Month Wise",   path: "/ecom/report/month-wise", icon: <CalendarMonthOutlined fontSize="small" /> },
-          { title: "Login Success", path: "/ecom/report/login-success", icon: <LoginOutlined fontSize="small" /> },
+          { title: "Today Report",         path: "/ecom/report/today",           icon: <TodayOutlined          fontSize="small" /> },
+          { title: "Month Wise",            path: "/ecom/report/month-wise",       icon: <CalendarMonthOutlined  fontSize="small" /> },
+          { title: "Login Success",         path: "/ecom/report/login-success",    icon: <LoginOutlined          fontSize="small" /> },
+          { title: "Online Payments",       path: "/admin/report/online-payments", icon: <CurrencyExchangeOutlined fontSize="small" /> },
         ],
       },
     ],

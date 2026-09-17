@@ -25,6 +25,7 @@ import {
   SettingsOutlined,
   PointOfSaleOutlined,
   LaunchOutlined,
+  KeyOutlined,
 } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ColorModeContext } from "../../../theme";
@@ -36,6 +37,7 @@ import { getProjectText } from "../../../config/projectSettings";
 const PAGE_TITLES = {
   "/admin":                          "Dashboard",
   "/admin/profile":                  "Profile",
+  "/admin/change-password":          "Change Password",
   "/admin/pos":                      "POS Management",
   "/ecom/product/add":               "Add Product",
   "/ecom/product/all":               "All Products",
@@ -44,7 +46,7 @@ const PAGE_TITLES = {
   "/ecom/product/attribute":         "Attributes",
   "/ecom/category/add":              "Add Category",
   "/ecom/brand/manage":              "Brand Management",
-  "/admin/subscription-packages":     "Subscription Packages",
+  "/admin/subscription-packages":    "Subscription Packages",
   "/ecom/order/all":                 "All Orders",
   "/ecom/order/completed":           "Completed Orders",
   "/ecom/seller/add":                "Add Seller",
@@ -61,6 +63,8 @@ const PAGE_TITLES = {
   "/ecom/setting/shipping-cost":     "Shipping Cost",
   "/ecom/accounts/transactions":     "Ledgers",
   "/ecom/accounts/settlements":      "Settlements",
+  "/admin/admin-list":               "Admin List",
+  "/admin/report/online-payments":   "Online Payment Report",
 };
 
 const Navbar = () => {
@@ -77,6 +81,8 @@ const Navbar = () => {
   const [adminEmail, setAdminEmail] = useState("admin@example.com");
 
   const pageTitle = getProjectText(PAGE_TITLES[location.pathname] ?? "Admin Panel");
+
+  const closeMenu = () => setAnchorEl(null);
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
@@ -98,7 +104,7 @@ const Navbar = () => {
         const name = user?.name || user?.full_name || user?.user_name;
         const email = user?.email || user?.mail;
 
-        if (name) setAdminName(name);
+        if (name)  setAdminName(name);
         if (email) setAdminEmail(email);
       } catch (error) {
         console.error("Failed to load admin details:", error);
@@ -108,13 +114,16 @@ const Navbar = () => {
     loadAdmin();
   }, []);
 
-  const navBg     = isDark ? "#1e293b" : "#ffffff";
-  const border    = isDark ? "#334155" : "#e2e8f0";
-  const inputBg   = isDark ? "rgba(255,255,255,0.05)" : "#f8fafc";
+  const navBg   = isDark ? "#1e293b" : "#ffffff";
+  const border  = isDark ? "#334155" : "#e2e8f0";
+  const inputBg = isDark ? "rgba(255,255,255,0.05)" : "#f8fafc";
 
   const handleVisitCustomerSite = () => {
     window.open("/", "_blank", "noopener,noreferrer");
   };
+
+  // helper: navigate + close menu
+  const go = (path) => { navigate(path); closeMenu(); };
 
   return (
     <Box
@@ -131,7 +140,7 @@ const Navbar = () => {
         zIndex: 10,
       }}
     >
-      {/* â”€â”€ Left: hamburger + page title */}
+      {/* ── Left: hamburger + page title */}
       <Box display="flex" alignItems="center" gap={1.5}>
         {isMobile && (
           <IconButton size="small" onClick={() => setToggled(!toggled)} sx={{ color: "text.secondary" }}>
@@ -153,7 +162,7 @@ const Navbar = () => {
         </Box>
       </Box>
 
-      {/* â”€â”€ Right: actions */}
+      {/* ── Right: actions */}
       <Box display="flex" alignItems="center" gap={0.5}>
         {hasCustomerSite && !isMobile && (
           <Button
@@ -238,7 +247,7 @@ const Navbar = () => {
           </IconButton>
         </Tooltip>
 
-        {/* User avatar */}
+        {/* User avatar trigger */}
         <Box
           onClick={(e) => setAnchorEl(e.currentTarget)}
           sx={{
@@ -256,7 +265,9 @@ const Navbar = () => {
             "&:hover": { background: isDark ? "rgba(255,255,255,0.05)" : "rgba(99,102,241,0.06)" },
           }}
         >
-          <Avatar sx={{ width: 32, height: 32, fontSize: 13 }}>{adminName?.charAt(0)?.toUpperCase() || "A"}</Avatar>
+          <Avatar sx={{ width: 32, height: 32, fontSize: 13 }}>
+            {adminName?.charAt(0)?.toUpperCase() || "A"}
+          </Avatar>
           {!isMobile && (
             <Box>
               <Typography sx={{ fontSize: 13, fontWeight: 600, color: "text.primary", lineHeight: 1.2 }}>
@@ -269,38 +280,70 @@ const Navbar = () => {
           )}
         </Box>
 
-        {/* Dropdown menu */}
+        {/* ── Profile Dropdown Menu ── */}
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
-          onClose={() => setAnchorEl(null)}
+          onClose={closeMenu}
           transformOrigin={{ horizontal: "right", vertical: "top" }}
           anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           PaperProps={{
             sx: {
-              mt: 1, minWidth: 190,
+              mt: 1,
+              minWidth: 210,
               border: `1px solid ${border}`,
               "& .MuiMenuItem-root": { px: 2, py: 1, gap: 1.5, fontSize: 13, fontWeight: 500 },
             },
           }}
         >
+          {/* User info header */}
           <Box sx={{ px: 2, py: 1.5 }}>
-            <Typography sx={{ fontSize: 13, fontWeight: 700, color: "text.primary" }}>{adminName}</Typography>
-            <Typography sx={{ fontSize: 12, color: "text.secondary" }}>{adminEmail}</Typography>
+            <Typography sx={{ fontSize: 13, fontWeight: 700, color: "text.primary" }}>
+              {adminName}
+            </Typography>
+            <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+              {adminEmail}
+            </Typography>
           </Box>
+
           <Divider />
-          <MenuItem onClick={() => { navigate("/admin/profile"); setAnchorEl(null); }}>
-            <PersonOutlined fontSize="small" />  Profile
+
+          {/* Profile */}
+          <MenuItem onClick={() => go("/admin/profile")}>
+            <PersonOutlined fontSize="small" />
+            Profile
           </MenuItem>
-          <MenuItem onClick={() => { navigate("/ecom/setting/website-logo"); setAnchorEl(null); }}>
-            <SettingsOutlined fontSize="small" />  Settings
+
+          {/* Change Password ← NEW */}
+          <MenuItem
+            onClick={() => go("/admin/profile")}
+            sx={{
+              color: "text.primary",
+              "&:hover": {
+                background: isDark ? "rgba(99,102,241,0.12)" : "rgba(99,102,241,0.08)",
+                color: "#6366f1",
+              },
+            }}
+          >
+            <KeyOutlined fontSize="small" />
+            Change Password
           </MenuItem>
+
+          {/* Settings */}
+          <MenuItem onClick={() => go("/ecom/setting/website-logo")}>
+            <SettingsOutlined fontSize="small" />
+            Settings
+          </MenuItem>
+
           <Divider />
+
+          {/* Sign out */}
           <MenuItem
             onClick={handleLogout}
             sx={{ color: "error.main", "&:hover": { background: "rgba(239,68,68,0.08)" } }}
           >
-            <LogoutOutlined fontSize="small" />  Sign out
+            <LogoutOutlined fontSize="small" />
+            Sign out
           </MenuItem>
         </Menu>
       </Box>

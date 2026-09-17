@@ -69,3 +69,57 @@ export const updateShopStatus = async (id, data) => {
     return { status: 'error', message: error.message };
   }
 };
+
+export const getStoreQrAppBlob = async (storeId) => {
+  try {
+    const response = await axiosInstance.get(`/api/stores/${storeId}/qr/app`, {
+      responseType: 'blob',
+      headers: {
+        Accept: 'image/png',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    if (error?.response?.status === 404) {
+      try {
+        const fallbackRes = await axiosInstance.get(`/api/shops/${storeId}/qr/app`, {
+          responseType: 'blob',
+          headers: {
+            Accept: 'image/png',
+          },
+        });
+        return fallbackRes.data;
+      } catch (e) {
+        throw error;
+      }
+    }
+    console.error('Error fetching store QR image blob:', error);
+    throw error;
+  }
+};
+
+export const getStoreQrPayloadData = async (storeId) => {
+  try {
+    const response = await axiosInstance.get(`/api/stores/${storeId}/qr/payload`, {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    if (error?.response?.status === 404) {
+      try {
+        const fallbackRes = await axiosInstance.get(`/api/shops/${storeId}/qr/payload`, {
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+        return fallbackRes.data;
+      } catch (e) {
+        throw error;
+      }
+    }
+    console.error('Error fetching store QR payload:', error);
+    throw error;
+  }
+};

@@ -227,3 +227,23 @@ export const getLoginSuccessLogs = async (params = {}) => {
     };
   }
 }
+
+// ── Online Payment Report ──────────────────────────────────────────────────────
+export const getOnlinePaymentReport = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get(`/api/payments/online/report`, {
+      params,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching online payment report:", error);
+    return {
+      status: "error",
+      message: error?.response?.data?.message || error.message || "Failed to fetch payment report",
+      data: null,
+    };
+  }
+};
