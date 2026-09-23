@@ -247,3 +247,49 @@ export const getOnlinePaymentReport = async (params = {}) => {
     };
   }
 };
+
+// ── Chat Admin Volume & Activity Report ────────────────────────────────────────
+export const getChatAdminReport = async (params = {}) => {
+  try {
+    const response = await axiosInstance.get(`/api/chat/admin/report`, {
+      params,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    // If /api/chat/admin/report returns 404, fallback to /api/reports/chat
+    if (error?.response?.status === 404) {
+      try {
+        const fallbackRes = await axiosInstance.get(`/api/reports/chat`, {
+          params,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        });
+        return fallbackRes.data;
+      } catch (fallbackError) {
+        console.error("Fallback getChatAdminReport failed:", fallbackError);
+        return {
+          status: "error",
+          message: fallbackError?.response?.data?.message || fallbackError.message || "Failed to fetch chat report",
+          data: null,
+        };
+      }
+    }
+    console.error("Error fetching chat report:", error);
+    return {
+      status: "error",
+      message: error?.response?.data?.message || error.message || "Failed to fetch chat report",
+      data: null,
+    };
+  }
+};
+
+export {
+  getSubscriptionReport,
+  verifySubscriptionPayment,
+} from "../subscription_package/subscription_package_controller.jsx";
+
+

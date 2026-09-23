@@ -6,6 +6,7 @@ import {
   Alert,
   Box,
   Button,
+  ButtonGroup,
   Card,
   CardContent,
   Checkbox,
@@ -44,6 +45,13 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import RocketLaunchOutlinedIcon from "@mui/icons-material/RocketLaunchOutlined";
+import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
+import TableRowsOutlinedIcon from "@mui/icons-material/TableRowsOutlined";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import {
   createSubscriptionPackage,
   deleteSubscriptionPackage,
@@ -95,6 +103,18 @@ const fieldError = (errors, key) => {
   const value = errors?.[key];
   if (!value) return "";
   return Array.isArray(value) ? value.join(" ") : String(value);
+};
+
+const normalizeFeatures = (features) => {
+  if (Array.isArray(features)) return features;
+  if (typeof features !== "string") return [];
+  try {
+    const parsed = JSON.parse(features);
+    if (Array.isArray(parsed)) return parsed;
+  } catch {
+    // fallback
+  }
+  return features.split(",").map((item) => item.trim()).filter(Boolean);
 };
 
 const normalizePackage = (pkg = {}) => {
@@ -149,6 +169,258 @@ const buildPayload = (form) => {
 const formatMoney = (pkg) =>
   `${pkg?.currency || "BDT"} ${Number(pkg?.price || 0).toLocaleString("en-BD")}`;
 
+const formatLimit = (value, suffix, unlimitedLabel = "Unlimited") => {
+  if (value === null || value === undefined || value === "") return `${unlimitedLabel} ${suffix}`;
+  return `${Number(value).toLocaleString("en-BD")} ${suffix}`;
+};
+
+// ─────────────────────────────────────────────────────────────
+// StoreOwnerLanding-Matching Package Card
+// ─────────────────────────────────────────────────────────────
+const StorefrontPackageCard = ({
+  pkg,
+  onEdit,
+  onToggleStatus,
+  onDelete,
+  actionLoading = false,
+  showAdminControls = true,
+}) => {
+  const popular = Boolean(pkg.is_popular);
+  const featured = Boolean(pkg.is_featured);
+  const pkgFeatures = normalizeFeatures(pkg.features);
+  const isActive = pkg.status === "active";
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        height: "100%",
+        borderRadius: "8px",
+        border: `1px solid ${popular ? "#2563eb" : "#e2e8f0"}`,
+        boxShadow: popular
+          ? "0 24px 58px rgba(37,99,235,0.16)"
+          : "0 10px 28px rgba(15,23,42,0.04)",
+        overflow: "hidden",
+        bgcolor: "#ffffff",
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
+        transition: "transform 0.18s ease, box-shadow 0.18s ease",
+        "&:hover": {
+          transform: "translateY(-3px)",
+          boxShadow: popular
+            ? "0 28px 64px rgba(37,99,235,0.22)"
+            : "0 16px 36px rgba(15,23,42,0.08)",
+        },
+      }}
+    >
+      {/* Popular Header Ribbon */}
+      {popular && (
+        <Box
+          sx={{
+            bgcolor: "#2563eb",
+            color: "#ffffff",
+            py: 0.9,
+            textAlign: "center",
+            fontWeight: 950,
+            fontSize: 12,
+            letterSpacing: 0.5,
+            textTransform: "uppercase",
+          }}
+        >
+          Most Popular
+        </Box>
+      )}
+
+      <Stack spacing={2} sx={{ p: 2.6, flex: 1, display: "flex", flexDirection: "column" }}>
+        {/* Card Header Icon & Status Badges */}
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Box
+            sx={{
+              width: 46,
+              height: 46,
+              borderRadius: "8px",
+              bgcolor: featured ? "#ecfdf5" : "#eef2ff",
+              color: featured ? "#059669" : "#2563eb",
+              display: "grid",
+              placeItems: "center",
+            }}
+          >
+            {featured ? <RocketLaunchOutlinedIcon /> : <WorkspacePremiumOutlinedIcon />}
+          </Box>
+
+          <Stack direction="row" spacing={0.8} alignItems="center">
+            {featured && (
+              <Chip
+                size="small"
+                label="Featured"
+                color="success"
+                variant="outlined"
+                sx={{ fontWeight: 850, borderRadius: "6px" }}
+              />
+            )}
+            <Chip
+              size="small"
+              label={pkg.status || "active"}
+              color={isActive ? "success" : "default"}
+              sx={{
+                fontWeight: 800,
+                textTransform: "capitalize",
+                borderRadius: "6px",
+                bgcolor: isActive ? "#dcfce7" : "#f1f5f9",
+                color: isActive ? "#166534" : "#64748b",
+              }}
+            />
+            {pkg.sort_order !== undefined && pkg.sort_order !== null && (
+              <Chip
+                size="small"
+                label={`#${pkg.sort_order}`}
+                variant="outlined"
+                sx={{ fontWeight: 700, borderRadius: "6px", height: 22 }}
+              />
+            )}
+          </Stack>
+        </Stack>
+
+        {/* Name & Short Description */}
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 950, color: "#111827", lineHeight: 1.25 }}>
+            {pkg.name}
+          </Typography>
+          <Typography
+            sx={{
+              color: "#64748b",
+              mt: 0.7,
+              minHeight: 48,
+              lineHeight: 1.55,
+              fontSize: "0.875rem",
+            }}
+          >
+            {pkg.short_description || "Practical package to grow your online store."}
+          </Typography>
+        </Box>
+
+        {/* Pricing */}
+        <Box>
+          <Typography variant="h3" sx={{ fontWeight: 950, color: "#111827", letterSpacing: 0, fontSize: "1.85rem" }}>
+            {formatMoney(pkg)}
+          </Typography>
+          <Typography sx={{ color: "#64748b", fontWeight: 850, fontSize: "0.85rem", mt: 0.2 }}>
+            /{pkg.billing_cycle || "monthly"}
+          </Typography>
+        </Box>
+
+        <Divider />
+
+        {/* 4-Chip Attribute Grid */}
+        <Grid container spacing={1}>
+          <Grid item xs={6}>
+            <Chip
+              label={`${pkg.trial_days || 0} Trial Days`}
+              sx={{ width: "100%", fontWeight: 800, borderRadius: "6px", fontSize: "0.78rem" }}
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <Chip
+              label={formatLimit(pkg.max_products, "Products", "Unlimited")}
+              sx={{ width: "100%", fontWeight: 800, borderRadius: "6px", fontSize: "0.78rem" }}
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <Chip
+              label={formatLimit(pkg.max_staff, "Staff", "Unlimited")}
+              sx={{ width: "100%", fontWeight: 800, borderRadius: "6px", fontSize: "0.78rem" }}
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <Chip
+              label={`${pkg.commission_rate ?? 0}% Commission`}
+              sx={{ width: "100%", fontWeight: 800, borderRadius: "6px", fontSize: "0.78rem" }}
+            />
+          </Grid>
+        </Grid>
+
+        {/* Features Checklist */}
+        {pkgFeatures.length > 0 && (
+          <Stack spacing={1} sx={{ mt: 1 }}>
+            {pkgFeatures.slice(0, 6).map((feature, index) => (
+              <Stack direction="row" spacing={1} alignItems="flex-start" key={`${pkg.id || "preview"}-${index}`}>
+                <CheckCircleOutlineIcon sx={{ color: "#059669", fontSize: 19, mt: 0.15, flexShrink: 0 }} />
+                <Typography variant="body2" sx={{ color: "#334155", fontWeight: 750, lineHeight: 1.55 }}>
+                  {feature}
+                </Typography>
+              </Stack>
+            ))}
+          </Stack>
+        )}
+
+        {/* Admin Action Bar */}
+        {showAdminControls && (
+          <Box sx={{ mt: "auto", pt: 2, borderTop: "1px solid #f1f5f9" }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Button
+                fullWidth
+                variant={popular ? "contained" : "outlined"}
+                startIcon={<EditOutlinedIcon />}
+                onClick={() => onEdit?.(pkg)}
+                sx={{
+                  borderRadius: "8px",
+                  py: 0.9,
+                  textTransform: "none",
+                  fontWeight: 900,
+                  bgcolor: popular ? "#2563eb" : undefined,
+                  "&:hover": {
+                    bgcolor: popular ? "#1d4ed8" : undefined,
+                  },
+                }}
+              >
+                Edit Plan
+              </Button>
+
+              <Tooltip title={isActive ? "Mark plan as Inactive" : "Mark plan as Active"}>
+                <span>
+                  <IconButton
+                    color={isActive ? "warning" : "success"}
+                    disabled={actionLoading}
+                    onClick={() => onToggleStatus?.(pkg)}
+                    sx={{
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "8px",
+                      bgcolor: isActive ? "#fffbeb" : "#f0fdf4",
+                    }}
+                  >
+                    <VisibilityOffOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+
+              <Tooltip title="Delete package">
+                <span>
+                  <IconButton
+                    color="error"
+                    disabled={actionLoading}
+                    onClick={() => onDelete?.(pkg)}
+                    sx={{
+                      border: "1px solid #fee2e2",
+                      borderRadius: "8px",
+                      bgcolor: "#fef2f2",
+                    }}
+                  >
+                    <DeleteOutlineOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Stack>
+          </Box>
+        )}
+      </Stack>
+    </Paper>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
+// Package Form Component
+// ─────────────────────────────────────────────────────────────
 const PackageForm = ({ form, errors, onChange, onNameChange, onSlugChange, onSubmit, submitting, submitLabel }) => {
   const updateFeature = (index, value) => {
     const next = [...(form.features || [])];
@@ -272,6 +544,9 @@ const PackageForm = ({ form, errors, onChange, onNameChange, onSlugChange, onSub
   );
 };
 
+// ─────────────────────────────────────────────────────────────
+// Main SubscriptionPackageManagement Component
+// ─────────────────────────────────────────────────────────────
 const SubscriptionPackageManagement = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -283,8 +558,9 @@ const SubscriptionPackageManagement = () => {
   const [submitting, setSubmitting] = useState(false);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, per_page: 20, total: 0 });
-  const [statusFilter, setStatusFilter] = useState("active");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [cycleFilter, setCycleFilter] = useState("all");
+  const [viewMode, setViewMode] = useState("grid"); // "grid" | "table"
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState(emptyForm);
   const [editErrors, setEditErrors] = useState({});
@@ -410,14 +686,27 @@ const SubscriptionPackageManagement = () => {
     }
   };
 
-  const markInactive = async (pkg) => {
+  const togglePackageStatus = async (pkg) => {
     setActionLoadingId(pkg.id);
     try {
-      const response = await inactiveSubscriptionPackage(pkg.id);
-      setSnack({ open: true, message: response?.message || "Package marked inactive", severity: response?.status === "success" ? "success" : "error" });
+      if (pkg.status === "active") {
+        const response = await inactiveSubscriptionPackage(pkg.id);
+        setSnack({
+          open: true,
+          message: response?.message || "Package marked inactive",
+          severity: response?.status === "success" ? "success" : "error",
+        });
+      } else {
+        const response = await updateSubscriptionPackage(pkg.id, { ...buildPayload(normalizePackage(pkg)), status: "active" });
+        setSnack({
+          open: true,
+          message: response?.message || "Package activated successfully",
+          severity: response?.status === "success" ? "success" : "error",
+        });
+      }
       await loadPackages(page);
     } catch (error) {
-      setSnack({ open: true, message: error?.response?.data?.message || "Package inactive failed", severity: "error" });
+      setSnack({ open: true, message: error?.response?.data?.message || "Status update failed", severity: "error" });
     } finally {
       setActionLoadingId(null);
     }
@@ -438,63 +727,105 @@ const SubscriptionPackageManagement = () => {
     }
   };
 
-  const packageCards = useMemo(() => packages, [packages]);
-
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1280, mx: "auto" }}>
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1360, mx: "auto" }}>
+      {/* ── Header ──────────────────────────────────────────────────── */}
       <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={2} sx={{ mb: 3 }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 900 }}>Subscription Packages</Typography>
-          <Typography color="text.secondary">Create SaaS plans for store subscriptions.</Typography>
+          <Typography color="text.secondary">
+            Configure merchant SaaS plans. The cards below render in the exact same design seen on the Store Owner Landing page.
+          </Typography>
         </Box>
-        <Stack direction="row" spacing={1}>
-          <TextField select size="small" label="Status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} sx={{ minWidth: 130 }}>
-            <MenuItem value="all">All</MenuItem>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <TextField select size="small" label="Status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} sx={{ minWidth: 120 }}>
+            <MenuItem value="all">All Statuses</MenuItem>
             {statuses.map((status) => <MenuItem key={status} value={status}>{status}</MenuItem>)}
           </TextField>
-          <TextField select size="small" label="Cycle" value={cycleFilter} onChange={(e) => setCycleFilter(e.target.value)} sx={{ minWidth: 130 }}>
-            <MenuItem value="all">All</MenuItem>
+          <TextField select size="small" label="Cycle" value={cycleFilter} onChange={(e) => setCycleFilter(e.target.value)} sx={{ minWidth: 120 }}>
+            <MenuItem value="all">All Cycles</MenuItem>
             {billingCycles.map((cycle) => <MenuItem key={cycle} value={cycle}>{cycle}</MenuItem>)}
           </TextField>
+
+          <ButtonGroup size="small" variant="outlined">
+            <Tooltip title="Storefront Card View (Landing Page Design)">
+              <Button
+                variant={viewMode === "grid" ? "contained" : "outlined"}
+                onClick={() => setViewMode("grid")}
+                sx={{ px: 1.5 }}
+              >
+                <GridViewOutlinedIcon fontSize="small" />
+              </Button>
+            </Tooltip>
+            <Tooltip title="Data Table View">
+              <Button
+                variant={viewMode === "table" ? "contained" : "outlined"}
+                onClick={() => setViewMode("table")}
+                sx={{ px: 1.5 }}
+              >
+                <TableRowsOutlinedIcon fontSize="small" />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
         </Stack>
       </Stack>
 
+      {/* ── Create Package Card ─────────────────────────────────────── */}
       <Card variant="outlined" sx={{ borderRadius: 3, mb: 3 }}>
         <CardContent>
-          <Typography variant="h6" sx={{ fontWeight: 900, mb: 2 }}>Create Package</Typography>
-          <PackageForm form={form} errors={errors} onChange={setField} onNameChange={handleNameChange} onSlugChange={(e) => { setSlugEdited(true); setField("slug", slugify(e.target.value)); }} onSubmit={handleCreate} submitting={submitting} submitLabel="Create Package" />
+          <Typography variant="h6" sx={{ fontWeight: 900, mb: 2 }}>Create New Package</Typography>
+          <PackageForm
+            form={form}
+            errors={errors}
+            onChange={setField}
+            onNameChange={handleNameChange}
+            onSlugChange={(e) => { setSlugEdited(true); setField("slug", slugify(e.target.value)); }}
+            onSubmit={handleCreate}
+            submitting={submitting}
+            submitLabel="Create Package"
+          />
         </CardContent>
       </Card>
 
+      {/* ── Package List Section ────────────────────────────────────── */}
       <Card variant="outlined" sx={{ borderRadius: 3 }}>
         <CardContent>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 900 }}>Package List</Typography>
-            <Chip label={`${pagination.total} total`} size="small" />
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2.5 }}>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 900 }}>Package List</Typography>
+              <Typography variant="caption" color="text.secondary">
+                {viewMode === "grid" ? "Exact StoreOwnerLanding merchant view" : "Compact admin table view"}
+              </Typography>
+            </Box>
+            <Chip label={`${pagination.total} total plans`} size="small" sx={{ fontWeight: 700 }} />
           </Stack>
+
           {loading ? (
-            <Box sx={{ py: 7, display: "grid", placeItems: "center" }}><CircularProgress /></Box>
-          ) : isMobile ? (
-            <Stack spacing={2}>
-              {packageCards.map((pkg) => (
-                <Paper key={pkg.id} variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                  <Stack spacing={1}>
-                    <Stack direction="row" justifyContent="space-between">
-                      <Typography sx={{ fontWeight: 900 }}>{pkg.name}</Typography>
-                      <Chip label={pkg.status || "-"} size="small" color={pkg.status === "active" ? "success" : "default"} />
-                    </Stack>
-                    <Typography color="text.secondary">{formatMoney(pkg)} / {pkg.billing_cycle}</Typography>
-                    <Typography variant="body2">Products: {pkg.max_products ?? "Unlimited"} | Orders: {pkg.max_orders_per_month ?? "Unlimited"}</Typography>
-                    <Stack direction="row" spacing={1}>
-                      <Button size="small" startIcon={<EditOutlinedIcon />} onClick={() => openEdit(pkg)}>Edit</Button>
-                      <Button size="small" color="warning" startIcon={<VisibilityOffOutlinedIcon />} onClick={() => markInactive(pkg)}>Inactive</Button>
-                      <Button size="small" color="error" startIcon={<DeleteOutlineOutlinedIcon />} onClick={() => setDeleteTarget(pkg)}>Delete</Button>
-                    </Stack>
-                  </Stack>
-                </Paper>
+            <Box sx={{ py: 8, display: "grid", placeItems: "center", gap: 1.5 }}>
+              <CircularProgress />
+              <Typography sx={{ color: "text.secondary", fontWeight: 700 }}>Loading subscription packages...</Typography>
+            </Box>
+          ) : !packages.length ? (
+            <Alert severity="info" sx={{ borderRadius: 2 }}>
+              No subscription packages found for the selected filters.
+            </Alert>
+          ) : viewMode === "grid" ? (
+            /* StoreOwnerLanding Matching Grid */
+            <Grid container spacing={3} alignItems="stretch">
+              {packages.map((pkg) => (
+                <Grid item xs={12} sm={6} lg={4} key={pkg.id}>
+                  <StorefrontPackageCard
+                    pkg={pkg}
+                    onEdit={openEdit}
+                    onToggleStatus={togglePackageStatus}
+                    onDelete={setDeleteTarget}
+                    actionLoading={actionLoadingId === pkg.id}
+                  />
+                </Grid>
               ))}
-            </Stack>
+            </Grid>
           ) : (
+            /* Table View */
             <TableContainer>
               <Table>
                 <TableHead>
@@ -523,43 +854,61 @@ const SubscriptionPackageManagement = () => {
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>
                           <Tooltip title="Edit"><IconButton size="small" onClick={() => openEdit(pkg)}><EditOutlinedIcon fontSize="small" /></IconButton></Tooltip>
-                          <Tooltip title="Mark inactive"><span><IconButton size="small" color="warning" disabled={actionLoadingId === pkg.id} onClick={() => markInactive(pkg)}><VisibilityOffOutlinedIcon fontSize="small" /></IconButton></span></Tooltip>
+                          <Tooltip title={pkg.status === "active" ? "Mark inactive" : "Activate"}>
+                            <span>
+                              <IconButton size="small" color={pkg.status === "active" ? "warning" : "success"} disabled={actionLoadingId === pkg.id} onClick={() => togglePackageStatus(pkg)}>
+                                <VisibilityOffOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
                           <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={actionLoadingId === pkg.id} onClick={() => setDeleteTarget(pkg)}><DeleteOutlineOutlinedIcon fontSize="small" /></IconButton></span></Tooltip>
                         </Stack>
                       </TableCell>
                     </TableRow>
                   ))}
-                  {!packages.length && (
-                    <TableRow><TableCell colSpan={11} align="center" sx={{ py: 5 }}>No packages found.</TableCell></TableRow>
-                  )}
                 </TableBody>
               </Table>
             </TableContainer>
           )}
-          <Stack alignItems="center" sx={{ pt: 2 }}>
-            <Pagination count={pagination.last_page} page={page} onChange={(_, value) => setPage(value)} color="primary" />
-          </Stack>
+
+          {pagination.last_page > 1 && (
+            <Stack alignItems="center" sx={{ pt: 3 }}>
+              <Pagination count={pagination.last_page} page={page} onChange={(_, value) => setPage(value)} color="primary" />
+            </Stack>
+          )}
         </CardContent>
       </Card>
 
+      {/* ── Dialog: Edit Package ────────────────────────────────────── */}
       <Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="md" fullScreen={isMobile}>
         <DialogTitle sx={{ fontWeight: 900 }}>Edit Package</DialogTitle>
         <DialogContent dividers>
-          <PackageForm form={editForm} errors={editErrors} onChange={setEditField} onNameChange={handleEditNameChange} onSlugChange={(e) => { setEditSlugEdited(true); setEditField("slug", slugify(e.target.value)); }} onSubmit={handleUpdate} submitting={editSubmitting} submitLabel="Update Package" />
+          <PackageForm
+            form={editForm}
+            errors={editErrors}
+            onChange={setEditField}
+            onNameChange={handleEditNameChange}
+            onSlugChange={(e) => { setEditSlugEdited(true); setEditField("slug", slugify(e.target.value)); }}
+            onSubmit={handleUpdate}
+            submitting={editSubmitting}
+            submitLabel="Update Package"
+          />
         </DialogContent>
       </Dialog>
 
+      {/* ── Dialog: Delete Package ──────────────────────────────────── */}
       <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} fullWidth maxWidth="xs">
-        <DialogTitle sx={{ fontWeight: 900 }}>Delete package?</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 900 }}>Delete Package?</DialogTitle>
         <DialogContent dividers>
-          <Typography>Are you sure you want to delete {deleteTarget?.name || "this package"}?</Typography>
+          <Typography>Are you sure you want to delete <strong>{deleteTarget?.name || "this package"}</strong>? This action cannot be undone.</Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
-          <Button variant="contained" color="error" onClick={confirmDelete} disabled={Boolean(actionLoadingId)}>Delete</Button>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setDeleteTarget(null)} sx={{ textTransform: "none" }}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={confirmDelete} disabled={Boolean(actionLoadingId)} sx={{ textTransform: "none", fontWeight: 700 }}>Delete</Button>
         </DialogActions>
       </Dialog>
 
+      {/* ── Toast Snackbar ──────────────────────────────────────────── */}
       <Snackbar open={snack.open} autoHideDuration={3000} onClose={() => setSnack((prev) => ({ ...prev, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
         <Alert severity={snack.severity} onClose={() => setSnack((prev) => ({ ...prev, open: false }))}>{snack.message}</Alert>
       </Snackbar>

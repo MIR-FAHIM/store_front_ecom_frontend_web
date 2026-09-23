@@ -40,6 +40,7 @@ import {
   DesignServicesOutlined,
   AdminPanelSettingsOutlined,
   TipsAndUpdatesOutlined,
+  ForumOutlined,
 } from "@mui/icons-material";
 import defaultLogo from "../../../assets/logo/store_myzoo_white.png";
 import { ToggledContext } from "../../../App";
@@ -101,9 +102,11 @@ const NAV_GROUPS = [
         ],
       },
       {
-        title: "Subscription Packages",
-        path: "/admin/subscription-packages",
-        icon: <CardMembershipOutlined fontSize="small" />,
+        title: "Subscriptions", key: "subscription", icon: <CardMembershipOutlined fontSize="small" />,
+        children: [
+          { title: "Packages",            path: "/admin/subscription-packages", icon: <CardMembershipOutlined fontSize="small" /> },
+          { title: "Subscription Report", path: "/admin/report/subscriptions",   icon: <ReceiptLongOutlined    fontSize="small" /> },
+        ],
       },
       {
         title: "Store Owner Tips",
@@ -145,6 +148,8 @@ const NAV_GROUPS = [
         children: [
           { title: "Today Report",         path: "/ecom/report/today",           icon: <TodayOutlined          fontSize="small" /> },
           { title: "Month Wise",            path: "/ecom/report/month-wise",       icon: <CalendarMonthOutlined  fontSize="small" /> },
+          { title: "Chat Report",           path: "/admin/report/chat",            icon: <ForumOutlined          fontSize="small" /> },
+          { title: "Subscriptions",         path: "/admin/report/subscriptions",   icon: <CardMembershipOutlined fontSize="small" /> },
           { title: "Login Success",         path: "/ecom/report/login-success",    icon: <LoginOutlined          fontSize="small" /> },
           { title: "Online Payments",       path: "/admin/report/online-payments", icon: <CurrencyExchangeOutlined fontSize="small" /> },
         ],

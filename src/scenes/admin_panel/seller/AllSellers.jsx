@@ -241,12 +241,61 @@ const AllSellers = () => {
         )}
       </Stack>
     );
+  }
+  const renderProductsCount = (seller) => {
+    const pc = seller?.products_count;
+
+    if (pc === null || pc === undefined) {
+      return <Typography variant="body2" color="text.secondary">0</Typography>;
+    }
+
+    if (typeof pc === "object") {
+      const total = pc.total ?? 0;
+      const active = pc.active ?? 0;
+      const inactive = pc.inactive ?? 0;
+
+      return (
+        <Tooltip title={`Total: ${total} · Active: ${active} · Inactive: ${inactive}`} arrow placement="top">
+          <Stack spacing={0.3} alignItems="flex-start">
+            <Chip
+              label={`${total} ${total === 1 ? "Product" : "Products"}`}
+              size="small"
+              sx={{
+                height: 22,
+                fontWeight: 800,
+                fontSize: 11,
+                bgcolor: total > 0 ? "rgba(99, 102, 241, 0.12)" : "action.hover",
+                color: total > 0 ? "#6366f1" : "text.secondary",
+                borderRadius: 1.5,
+              }}
+            />
+            <Typography variant="caption" sx={{ fontSize: 10, color: "text.secondary", fontWeight: 600 }}>
+              <span style={{ color: "#10b981" }}>{active} act</span> · <span style={{ color: "#ef4444" }}>{inactive} inact</span>
+            </Typography>
+          </Stack>
+        </Tooltip>
+      );
+    }
+
+    const totalNum = Number(pc || 0);
+    return (
+      <Chip
+        label={`${totalNum} ${totalNum === 1 ? "Product" : "Products"}`}
+        size="small"
+        sx={{
+          height: 22,
+          fontWeight: 800,
+          fontSize: 11,
+          borderRadius: 1.5,
+        }}
+      />
+    );
   };
 
   // ────────────────────────────────────────
   // Render
   // ────────────────────────────────────────
-  const COL_SPAN = 10; // ID + Shop + Code + Slug + User + Email + Phone + Address + Status + Actions
+  const COL_SPAN = 11; // ID + Shop + Code + Slug + User + Email + Phone + Address + Products + Status + Actions
 
   return (
     <Box sx={{ p: 3 }}>
@@ -342,7 +391,7 @@ const AllSellers = () => {
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  {["ID", "Shop", "Code", "Slug", "User", "Email", "Phone", "Address", "Status", "Actions"].map((h) => (
+                  {["ID", "Shop", "Code", "Slug", "User", "Email", "Phone", "Address", "Products", "Status", "Actions"].map((h) => (
                     <TableCell
                       key={h}
                       align={h === "Actions" ? "center" : "left"}
@@ -351,7 +400,7 @@ const AllSellers = () => {
                         backgroundColor: colors.primary[500],
                         borderBottom: `1px solid ${colors.primary[300]}`,
                         whiteSpace: "nowrap",
-                        minWidth: h === "Shop" ? 250 : undefined,
+                        minWidth: h === "Shop" ? 250 : h === "Products" ? 120 : undefined,
                       }}
                     >
                       {h}
@@ -440,6 +489,11 @@ const AllSellers = () => {
                         <Typography variant="body2" noWrap title={renderLocation(seller)}>
                           {renderLocation(seller)}
                         </Typography>
+                      </TableCell>
+
+                      {/* Products Count */}
+                      <TableCell sx={{ minWidth: 120 }}>
+                        {renderProductsCount(seller)}
                       </TableCell>
 
                       {/* Shop Status */}

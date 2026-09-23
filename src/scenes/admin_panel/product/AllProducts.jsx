@@ -1,5 +1,5 @@
-﻿import React, { useEffect, useState, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTheme } from "@mui/material";
 import {
   Box,
@@ -173,10 +173,14 @@ const AllProducts = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [deletingId, setDeletingId] = useState(null);
   const [duplicatingId, setDuplicatingId] = useState(null);
-  const [duplicateTarget, setDuplicateTarget] = useState(null);
-  const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
+  const [searchParams] = useSearchParams();
 
-  const searchTimer = useRef(null);
+  useEffect(() => {
+    const urlShopId = searchParams.get("shop_id");
+    if (urlShopId) {
+      setShopId(urlShopId);
+    }
+  }, [searchParams]);
 
   /* debounce search input */
   useEffect(() => {

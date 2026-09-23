@@ -54,6 +54,8 @@ import TodayReport        from "./scenes/admin_panel/report/TodayReport";
 import MonthWiseReport    from "./scenes/admin_panel/report/MonthWiseReport";
 import LoginSuccessLogs   from "./scenes/admin_panel/report/LoginSuccessLogs";
 import OnlinePaymentReport from "./scenes/admin_panel/report/OnlinePaymentReport";
+import ChatReport         from "./scenes/admin_panel/report/ChatReport";
+
 
 // Accounts
 import AllTransaction   from "./scenes/admin_panel/accounts/AllTransaction";
@@ -65,10 +67,12 @@ import EcommerceSetting   from "./scenes/admin_panel/setting/EcommerceSetting";
 import WebsiteLogoSetting from "./scenes/admin_panel/setting/website_logo_setting";
 import ShippingCostSetting from "./scenes/admin_panel/setting/shipping_cost";
 
-// Catalog
+// Catalog & Subscriptions
 import AddCategory      from "./scenes/admin_panel/category/AddCategory";
 import BrandManagement  from "./scenes/admin_panel/brand/BrandManagement";
 import SubscriptionPackageManagement from "./scenes/admin_panel/subscription/SubscriptionPackageManagement";
+import SubscriptionReport from "./scenes/admin_panel/subscription/SubscriptionReport";
+
 
 // Media & Banners
 import AddBanner from "./scenes/admin_panel/media/AddBanner";
@@ -321,7 +325,15 @@ const AppRouter = () => {
           {/* Catalog */}
           <Route path="/ecom/category/add"              element={<AddCategory />} />
           <Route path="/ecom/brand/manage"              element={<BrandManagement />} />
+
+          {/* Subscriptions */}
           <Route path="/admin/subscription-packages"    element={<SubscriptionPackageManagement />} />
+          <Route path="/admin/subscriptions/packages"   element={<SubscriptionPackageManagement />} />
+          <Route path="/admin/report/subscriptions"     element={<SubscriptionReport />} />
+          <Route path="/admin/subscriptions/reports"    element={<SubscriptionReport />} />
+          <Route path="/admin/subscriptions/report"     element={<SubscriptionReport />} />
+          <Route path="/ecom/report/subscriptions"      element={<SubscriptionReport />} />
+
 
           {/* Orders */}
           <Route path="/ecom/order/all"       element={<AllOrdersEcom />} />
@@ -350,6 +362,9 @@ const AppRouter = () => {
           <Route path="/ecom/report/month-wise"         element={<MonthWiseReport />} />
           <Route path="/ecom/report/login-success"      element={<LoginSuccessLogs />} />
           <Route path="/admin/report/online-payments"   element={<OnlinePaymentReport />} />
+          <Route path="/admin/report/chat"              element={<ChatReport />} />
+          <Route path="/ecom/report/chat"               element={<ChatReport />} />
+
 
           {/* Accounts */}
           <Route path="/ecom/accounts"              element={<EcommerceAccounts />} />

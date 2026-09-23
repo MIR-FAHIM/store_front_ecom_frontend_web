@@ -260,7 +260,8 @@ const ShopManage = () => {
 								{tab === 1 ? (
 									<ShopManageProducts
 										shopId={shopId}
-										onOpenShop={(sid) => navigate(`/shop/${sid}`)}
+										shopSlug={form.slug}
+										onOpenShop={(sid) => navigate(`/ecom/product/all?shop_id=${sid}`)}
 									/>
 								) : null}
 
