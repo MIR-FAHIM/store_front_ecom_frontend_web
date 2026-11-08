@@ -61,13 +61,23 @@ export const updateShop = async (id, data) => {
 };
 export const updateShopStatus = async (id, data) => {
   try {
-    // productData should contain: shop_id, category_id, brand_id, name, slug, sku, short_description, description
-    const response = await axiosInstance.patch(`/api/shops/status/${id}`, data,); 
+    const response = await axiosInstance.patch(`/api/shops/status/${id}`, data);
     return response.data;
   } catch (error) {
-    console.error('Error updating shop updateShopStatus:', error);
-    return { status: 'error', message: error.message };
+    const body = error.response?.data;
+    return { status: 'error', message: body?.errors?.status?.[0] || body?.message || error.message };
   }
+};
+
+export const checkStorefrontAvailability = async (slug, signal) => {
+  const response = await axiosInstance.get(`/api/public/stores/${encodeURIComponent(slug)}/availability`, {
+    skipAuth: true,
+    signal,
+    validateStatus: (status) => status === 200 || status === 404,
+  });
+  if (response.status === 404) return false;
+  if (response.data?.data?.available === true) return true;
+  throw new Error('Unexpected storefront availability response.');
 };
 
 export const getStoreQrAppBlob = async (storeId) => {

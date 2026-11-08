@@ -3,7 +3,6 @@ import {
 	Box,
 	Button,
 	Grid,
-	MenuItem,
 	Stack,
 	TextField,
 	Typography,
@@ -112,18 +111,6 @@ const ShopManageGeneral = ({ form, onChange, onSave, saving }) => {
 					/>
 				</Grid>
 
-				<Grid item xs={12} md={6}>
-					<TextField
-						fullWidth
-						select
-						label="Status"
-						value={form.status}
-						onChange={(e) => onChange("status", e.target.value)}
-					>
-						<MenuItem value="active">Active</MenuItem>
-						<MenuItem value="inactive">Inactive</MenuItem>
-					</TextField>
-				</Grid>
 			</Grid>
 
 			<Stack direction="row" spacing={1.5} sx={{ mt: 3 }}>

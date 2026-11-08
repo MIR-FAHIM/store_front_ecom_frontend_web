@@ -6,7 +6,12 @@ const StorefrontContext = createContext(null);
 
 export const getStoreSlugFromPathname = (pathname = "") => {
   const match = String(pathname).match(/^\/store\/([^/?#]+)/);
-  return match ? decodeURIComponent(match[1]) : "";
+  if (!match) return "";
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
 };
 
 export const StorefrontProvider = ({ children }) => {

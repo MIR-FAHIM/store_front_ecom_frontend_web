@@ -30,6 +30,7 @@ import {
 import { ContentCopy as ContentCopyIcon, Delete, Edit, QrCode2Outlined, Refresh, Search, Visibility } from "@mui/icons-material";
 import { deleteSeller, getAllShops } from "../../../api/controller/admin_controller/user_controller.jsx";
 import { tokens } from "../../../theme";
+import { getShopStatus } from "../../../utils/shopStatus";
 
 const AllSellers = () => {
   const theme  = useTheme();
@@ -152,15 +153,14 @@ const AllSellers = () => {
   };
 
   // ── Chip: shop status ───────────────────
-  const renderStatusChip = (statusRaw, isBanned) => {
-    if (isBanned === true)
-      return <Chip label="Banned" size="small" variant="outlined" color="error" />;
-
-    const status = String(statusRaw ?? "").toLowerCase();
-    if (status === "active")   return <Chip label="Active"   size="small" variant="outlined" color="success" />;
-    if (status === "inactive") return <Chip label="Inactive" size="small" variant="outlined" color="warning" />;
-    if (!status)               return <Chip label="N/A"      size="small" variant="outlined" />;
-    return <Chip label={status} size="small" variant="outlined" />;
+  const renderStatusChip = (status, sellerBanned) => {
+    const { label, color } = getShopStatus(status);
+    return (
+      <Stack spacing={0.5} alignItems="flex-start">
+        <Chip label={label} color={color} size="small" variant="outlined" />
+        {Number(sellerBanned) === 1 && <Chip label="Seller banned" size="small" variant="outlined" color="error" />}
+      </Stack>
+    );
   };
 
   // ── Helper: address ─────────────────────
@@ -497,7 +497,7 @@ const AllSellers = () => {
                       </TableCell>
 
                       {/* Shop Status */}
-                      <TableCell>{renderStatusChip(seller?.status, seller?.user?.banned === 1)}</TableCell>
+                      <TableCell>{renderStatusChip(seller?.status, seller?.user?.banned)}</TableCell>
 
                       {/* Actions */}
                       <TableCell align="center">
